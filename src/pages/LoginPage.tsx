@@ -10,21 +10,49 @@ import { Label } from "../components/ui/label"
 import { Checkbox } from "../components/ui/checkbox"
 import { Eye, EyeOff, Zap } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
+import { authService, type LoginCredentials } from "../utils/auth"
 
 export default function LoginPage() {
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string>("")
+  const [formData, setFormData] = useState<LoginCredentials>({
+    emailId: "",
+    password: ""
+  })
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    setIsLoading(false)
-    // Navigate to dashboard after successful login
-    navigate("/dashboard")
-  }
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log("Form submitted, preventing default...");
+  
+    if (error) setError("");
+    if (!isLoading) setIsLoading(true);
+  
+    try {
+      console.log("Attempting login with:", formData);
+      const response = await authService.login(formData);
+  
+      console.log("Login successful:", response.data.emailId, response.data.username);
+  
+      navigate("/dashboard");
+    } catch (error: any) {
+      console.error("Login error:", error);
+      setError(error.message || "Login failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
@@ -47,12 +75,22 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Error Display */}
+              {error && (
+                <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+                  {error}
+                </div>
+              )}
+              
               <div className="space-y-2 text-left">
                 <Label htmlFor="email" className="ml-2 font-semibold">Email Address</Label>
                 <Input
                   id="email"
+                  name="emailId"
                   type="email"
                   placeholder="Enter your email"
+                  value={formData.emailId}
+                  onChange={handleInputChange}
                   required
                   className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
                 />
@@ -63,8 +101,11 @@ export default function LoginPage() {
                 <div className="relative">
                   <Input
                     id="password"
+                    name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
+                    value={formData.password}
+                    onChange={handleInputChange}
                     required
                     className="pr-10 transition-all duration-200 focus:ring-2 focus:ring-blue-500"
                   />
