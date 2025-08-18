@@ -77,13 +77,6 @@ const faqCategories = [
           "Go to your Profile page by clicking your name in the top navigation, then click 'Edit Profile'. You can update your personal information, contact details, and notification preferences. Don't forget to save your changes.",
         tags: ["profile", "update", "information"],
       },
-      {
-        id: "q6",
-        question: "Can I change my notification preferences?",
-        answer:
-          "Yes, you can customize your notification preferences in your Profile settings. You can choose to receive notifications via email, enable/disable push notifications, and set up weekly digests. These settings help you stay informed without being overwhelmed.",
-        tags: ["notifications", "preferences", "email"],
-      },
     ],
   },
   {
@@ -97,13 +90,6 @@ const faqCategories = [
         answer:
           "Common login issues include: incorrect username/password, account lockout after multiple failed attempts, or browser cache issues. Try clearing your browser cache, using an incognito window, or resetting your password. If problems persist, contact support.",
         tags: ["login", "troubleshooting", "access"],
-      },
-      {
-        id: "q8",
-        question: "I'm not receiving email notifications. What should I do?",
-        answer:
-          "First, check your spam/junk folder. Ensure your email address is correct in your profile settings and that email notifications are enabled. Add our support email to your contacts to prevent future emails from going to spam. If issues persist, contact your IT department or our support team.",
-        tags: ["email", "notifications", "spam"],
       },
       {
         id: "q9",

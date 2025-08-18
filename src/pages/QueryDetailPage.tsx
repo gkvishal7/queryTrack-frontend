@@ -1,96 +1,26 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { Button } from "../components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
-import { Textarea } from "../components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import { Separator } from "../components/ui/separator"
 import { Sidebar } from "../components/Sidebar"
 import EditQueryDialog from "../components/EditQueryDialog"
 import {
-  ArrowLeft,
   Edit,
-  MessageSquare,
   Paperclip,
-  User,
   Calendar,
   Clock,
-  CheckCircle,
-  AlertCircle,
   FileText,
   Download,
-  Eye,
-  EyeOff,
-  Send,
   RotateCcw,
   Trash2,
-  UserCheck,
   Save,
 } from "lucide-react"
 import FullScreenLoader from "../components/FullScreenLoader"
 
-// Mock data - in real app this would come from API
-const mockQuery = {
-  id: "QT-001",
-  title: "Login issues with company portal",
-  description: `I've been experiencing login issues with the company portal since yesterday morning. Here are the details:
-
-**Problem:**
-- Cannot log in to the company portal using my usual credentials
-- Getting "Invalid username or password" error message
-- This started happening after the system maintenance on Monday
-
-**Steps I've tried:**
-1. Cleared browser cache and cookies
-2. Tried different browsers (Chrome, Firefox, Safari)
-3. Reset my password using the "Forgot Password" link
-4. Tried logging in from different devices
-
-**Impact:**
-- Cannot access important project documents
-- Unable to submit my timesheet
-- Blocking my work on the Johnson project
-
-**Error Details:**
-- Error appears immediately after clicking "Login"
-- No loading time, instant error message
-- Browser console shows no JavaScript errors
-
-This is quite urgent as I have a client presentation tomorrow and need access to the project files.`,
-  status: "In Progress",
-  category: "IT Support",
-  priority: "High",
-  reporter: {
-    name: "John Smith",
-    email: "john.smith@company.com",
-    department: "Marketing",
-  },
-  assignedTo: {
-    name: "Sarah Johnson",
-    email: "sarah.johnson@company.com",
-    role: "IT Support Specialist",
-  },
-  createdAt: "2024-01-15T09:30:00Z",
-  updatedAt: "2024-01-15T14:22:00Z",
-  attachments: [
-    {
-      id: "1",
-      name: "error-screenshot.png",
-      size: 245760,
-      type: "image/png",
-      url: "/placeholder.svg?height=400&width=600",
-    },
-    {
-      id: "2",
-      name: "browser-console-log.txt",
-      size: 1024,
-      type: "text/plain",
-      url: "#",
-    },
-  ],
-  
-}
+import { queryService, Query } from "../utils/query"
 
 
 const statuses = [
@@ -121,44 +51,70 @@ const priorities = [
 export default function QueryDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [query, setQuery] = useState(mockQuery)
-  const [newComment, setNewComment] = useState("")
-  const [isInternalComment, setIsInternalComment] = useState(false)
-  const [showInternalNotes, setShowInternalNotes] = useState(true)
-  const [isSubmittingComment, setIsSubmittingComment] = useState(false)
+  const [query, setQuery] = useState<Query | null>(null);
   const [hasChanges, setHasChanges] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isSavingEdit, setIsSavingEdit] = useState(false)
+  const [error, setError] = useState<string>("")
 
-  // Simulate initial API fetch
+  // Fetch query details
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000)
-    return () => clearTimeout(timer)
-  }, [])
+    const fetchQueryDetails = async () => {
+      if (!id) return
+      
+      try {
+        setIsLoading(true)
+        setError("")
+        const response = await queryService.getQueryById(id)
+        setQuery(response.data)
+      } catch (error: any) {
+        setError(error.message || "Failed to fetch query details")
+        console.error("Error fetching query details:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
 
-  const handleQueryChange = (key: string, value: any) => {
-    setQuery((prev) => ({
-      ...prev,
-      [key]: value,
-    }))
-    setHasChanges(true)
-  }
+    fetchQueryDetails()
+  }, [id])
+
+    const handleQueryChange = (key: keyof Query, value: string) => {
+        setQuery((prev: Query | null) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            [key]: value,
+          };
+        });
+        setHasChanges(true);
+    };
 
   const handleSave = async () => {
-    setIsSaving(true)
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    setIsSaving(false)
-    setHasChanges(false)
+    if (!query || !id) return
+
+    try {
+      setIsSaving(true)
+      setError("")
+      const response = await queryService.updateQuery(id, query)
+	  console.log(response);
+	  
+      setHasChanges(false)
+    } catch (error: any) {
+      setError(error.message || "Failed to save changes")
+      console.error("Error saving query:", error)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   // Mock user role - in real app this would come from auth context
   const [userRole] = useState<"user" | "admin">("user") // Change to 'user' to see user view
   const [currentUser] = useState("Sarah Johnson") // Mock current user
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null) => {
+	if(!dateString) return "N/A"
     const date = new Date(dateString)
     return date.toLocaleString("en-US", {
       year: "numeric",
@@ -169,23 +125,15 @@ export default function QueryDetailPage() {
     })
   }
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes"
-    const k = 1024
-    const sizes = ["Bytes", "KB", "MB", "GB"]
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
-  }
-
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | null) => {
     const statusObj = statuses.find(
-      (s) => s.label.toLowerCase().replace(" ", "_") === status.toLowerCase().replace(" ", "_"),
+      (s) => s.label.toLowerCase().replace(" ", "_") === status?.toLowerCase().replace(" ", "_"),
     )
     return statusObj?.color || "bg-gray-100 text-gray-800"
   }
 
-  const getPriorityColor = (priority: string) => {
-    const priorityObj = priorities.find((p) => p.label.toLowerCase() === priority.toLowerCase())
+  const getPriorityColor = (priority: string | null) => {
+    const priorityObj = priorities.find((p) => p.label.toLowerCase() === priority?.toLowerCase())
     return priorityObj?.color || "bg-gray-100 text-gray-800"
   }
 
@@ -205,42 +153,58 @@ export default function QueryDetailPage() {
     setIsEditDialogOpen(true)
   }
 
-  const handleSaveEdit = async (editData: any) => {
-    setIsSavingEdit(true)
-    
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    
-    // Update query with edited data
-    setQuery((prev) => ({
-      ...prev,
-      title: editData.title,
-      description: editData.description,
-      category: editData.category,
-      priority: editData.priority,
-      attachments: editData.attachments,
-    }))
-    
-    setIsSavingEdit(false)
-    setIsEditDialogOpen(false)
-  }
+	const handleSaveEdit = async (editData: Partial<Query>) => {
+		if (!query || !query.queryId) return;
+		
+		try {
+			setIsSavingEdit(true)
+			setError("")
+
+			console.log("Saving edit data:", editData);
+			
+			const response = await queryService.updateQuery(query.queryId, {
+				title: editData.title,
+				description: editData.description,
+				category: editData.categoryName, // note: match the API interface
+				priority: editData.priority
+			})
+
+			console.log("Query updated successfully:", response);
+			
+			
+			// Update local state with new data
+			setQuery((prev: Query | null) => {
+				if (!prev) return prev;
+				return {
+					...prev,
+					title: response.data.title,
+					description: response.data.description,
+					categoryName: response.data.categoryName, // assuming API returns categoryName
+					priority: response.data.priority
+				};
+			})
+		} catch (error: any) {
+			setError(error.message || "Failed to save changes")
+		} finally {
+			setIsSavingEdit(false)
+			setIsEditDialogOpen(false)
+		}
+	}
 
   const getEditDialogData = () => ({
-    title: query.title,
-    description: query.description,
-    category: query.category.toLowerCase().replace(" ", "_"),
-    priority: query.priority.toLowerCase(),
-    attachments: query.attachments.map(att => ({
-      id: att.id,
-      name: att.name,
-      size: att.size,
-      type: att.type,
-    })),
+    title: query?.title ?? "",
+    description: query?.description ?? "",
+    categoryName: query?.categoryName ? query.categoryName.toLowerCase().replace(" ", "_") : "",
+    priority: query?.priority ? query.priority.toLowerCase() : ""
   })
 
-  if (isLoading || isSaving) {
-    return <FullScreenLoader message={isSaving ? "Saving..." : undefined} />
-  }
+	if (isLoading || isSaving) {
+		return <FullScreenLoader message={isSaving ? "Saving..." : undefined} />
+	}
+
+  	if (!query) {
+    	return <div>No query found</div>
+	}
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
@@ -258,7 +222,7 @@ export default function QueryDetailPage() {
                   <Badge className={getPriorityColor(query.priority)}>{query.priority} Priority</Badge> */}
                 </div>
                 <p className="text-gray-600 dark:text-gray-400 mt-1 hidden xl:block">
-                  Created {formatDate(query.createdAt)} • Last updated {formatDate(query.updatedAt)}
+                  Created {formatDate(query?.dateTime)}
                 </p>
               </div>
             </div>
@@ -272,7 +236,7 @@ export default function QueryDetailPage() {
                     <span className="hidden sm:block">Edit Query</span>
                   </Button>
                   
-                  {query.status === "Resolved" && (
+                  {query?.status === "Resolved" && (
                     <Button variant="outline" size="sm">
                       <RotateCcw className="w-4 h-4 mr-2" />
                       Reopen
@@ -318,6 +282,13 @@ export default function QueryDetailPage() {
             </div>
           </div>
 
+          {/* Error Display */}
+          {error && (
+            <div className="p-4 mb-4 text-sm text-red-800 bg-red-100 rounded-lg dark:bg-red-900 dark:text-red-200">
+              {error}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-6">
@@ -329,13 +300,13 @@ export default function QueryDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="prose dark:prose-invert max-w-none">
-                    <div className="text-left whitespace-pre-wrap text-gray-900 dark:text-gray-400">{query.description}</div>
+                    <div className="text-left whitespace-pre-wrap text-gray-900 dark:text-gray-400">{query?.description}</div>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Attachments */}
-              {query.attachments.length > 0 && (
+              {/* {query.attachments.length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
@@ -366,7 +337,7 @@ export default function QueryDetailPage() {
                     </div>
                   </CardContent>
                 </Card>
-              )}
+              )} */}
 
               
             </div>
@@ -382,7 +353,7 @@ export default function QueryDetailPage() {
                   <div>
                     <label className="text-sm font-semibold text-gray-300">Status</label>
                     {userRole === "admin" ? (
-                      <Select value={query.status.toLowerCase().replace(" ", "_")} onValueChange={(value) => handleQueryChange("status",value)}>
+                      <Select value={query?.status.toLowerCase().replace(" ", "_")} onValueChange={(value) => handleQueryChange("status",value)}>
                         <SelectTrigger className="mt-1">
                           <SelectValue />
                         </SelectTrigger>
@@ -396,7 +367,7 @@ export default function QueryDetailPage() {
                       </Select>
                     ) : (
                       <div className="mt-1">
-                        <Badge className={getStatusColor(query.status)}>{query.status}</Badge>
+                        <Badge className={getStatusColor(query?.status)}>{query?.status}</Badge>
                       </div>
                     )}
                   </div>
@@ -406,7 +377,7 @@ export default function QueryDetailPage() {
                     <div className="mt-1">
 						{userRole === "admin" ? 
 							(
-								<Select value={query.priority.toLowerCase().replace(" ", "_")} onValueChange={(value) => handleQueryChange("priority", value)}>
+								<Select value={query?.priority.toLowerCase().replace(" ", "_")} onValueChange={(value) => handleQueryChange("priority", value)}>
 								<SelectTrigger className="mt-1">
 								<SelectValue />
 								</SelectTrigger>
@@ -421,7 +392,7 @@ export default function QueryDetailPage() {
 							) : 
 							(
 								<div className="mt-1">
-									<Badge className={getPriorityColor(query.priority)}>{query.priority}</Badge>
+									<Badge className={getPriorityColor(query?.priority)}>{query?.priority}</Badge>
 								</div>
 							)
 						}
@@ -431,7 +402,7 @@ export default function QueryDetailPage() {
 
                   <div>
                     <label className="text-sm font-semibold text-gray-300">Category</label>
-                    <p className="mt-1 text-gray-900 dark:text-white">{query.category}</p>
+                    <p className="mt-1 text-gray-900 dark:text-white">{query?.categoryName}</p>
                   </div>
 
                   <Separator />
@@ -441,15 +412,7 @@ export default function QueryDetailPage() {
                     <label className="text-sm font-semibold text-gray-300">Created</label>
                     <div className="mt-1 flex items-center space-x-2">
                       <Calendar className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-900 dark:text-white">{formatDate(query.createdAt)}</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-semibold text-gray-300">Last Updated</label>
-                    <div className="mt-1 flex items-center space-x-2">
-                      <Clock className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-900 dark:text-white">{formatDate(query.updatedAt)}</span>
+                      <span className="text-gray-900 dark:text-white">{formatDate(query?.dateTime)}</span>
                     </div>
                   </div>
                 </CardContent>

@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "../components/ui/button"
@@ -7,186 +5,72 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
 import { Input } from "../components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
-import { Checkbox } from "../components/ui/checkbox"
 import { Sidebar } from "../components/Sidebar"
 import {
   Search,
   Filter,
-  AlertTriangle,
-  Clock,
-  CheckCircle,
   FileText,
 } from "lucide-react"
 import FullScreenLoader from "../components/FullScreenLoader"
+import { getStatusColor, getPriorityColor } from "@/constants/constants"
+import { AdminQuerySummaryResponse, adminQueryService } from "@/utils/admin"
 
-// Mock data for admin queries view
-const mockQueries = [
-  {
-    id: "QT-001",
-    title: "Login issues with company portal",
-    status: "In Progress",
-    category: "IT Support",
-    priority: "High",
-    reporter: "John Smith",
-    assignedTo: "Sarah Johnson",
-    createdAt: "2024-01-15",
-    updatedAt: "2024-01-15",
-    department: "Marketing",
-    sla: "2 hours remaining",
-    tags: ["authentication", "portal"],
-  },
-  {
-    id: "QT-002",
-    title: "Request for additional vacation days",
-    status: "Pending",
-    category: "HR",
-    priority: "Medium",
-    reporter: "Emily Davis",
-    assignedTo: "Mike Wilson",
-    createdAt: "2024-01-14",
-    updatedAt: "2024-01-14",
-    department: "Sales",
-    sla: "1 day remaining",
-    tags: ["vacation", "policy"],
-  },
-  {
-    id: "QT-003",
-    title: "Office heating system not working",
-    status: "Resolved",
-    category: "Facilities",
-    priority: "High",
-    reporter: "Robert Brown",
-    assignedTo: "Tom Anderson",
-    createdAt: "2024-01-13",
-    updatedAt: "2024-01-13",
-    department: "Engineering",
-    sla: "Completed",
-    tags: ["heating", "maintenance"],
-  },
-  {
-    id: "QT-004",
-    title: "Software license renewal needed",
-    status: "Open",
-    category: "IT Support",
-    priority: "Low",
-    reporter: "Lisa Garcia",
-    assignedTo: null,
-    createdAt: "2024-01-12",
-    updatedAt: "2024-01-12",
-    department: "Finance",
-    sla: "3 days remaining",
-    tags: ["license", "software"],
-  },
-  {
-    id: "QT-005",
-    title: "Conference room booking system issues",
-    status: "Closed",
-    category: "Facilities",
-    priority: "Medium",
-    reporter: "David Lee",
-    assignedTo: "Tom Anderson",
-    createdAt: "2024-01-10",
-    updatedAt: "2024-01-11",
-    department: "Operations",
-    sla: "Completed",
-    tags: ["booking", "system"],
-  },
-]
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "Resolved":
-      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-    case "In Progress":
-      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-    case "Pending":
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-    case "Open":
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
-    case "Closed":
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
-    default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
-  }
-}
-
-const getPriorityColor = (priority: string) => {
-  switch (priority) {
-    case "High":
-      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-    case "Medium":
-      return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
-    case "Low":
-      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-    case "Critical":
-      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-    default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
-  }
-}
-
-const getSLAColor = (sla: string) => {
-  if (sla === "Completed") return "text-green-600"
-  if (sla.includes("hour")) return "text-red-600"
-  if (sla.includes("1 day")) return "text-orange-600"
-  return "text-gray-600"
-}
-
-const getStatusIcon = (status: string) => {
-  switch (status) {
-    case "Resolved":
-      return <CheckCircle className="w-4 h-4" />
-    case "In Progress":
-      return <Clock className="w-4 h-4" />
-    case "Pending":
-      return <AlertTriangle className="w-4 h-4" />
-    case "Open":
-      return <FileText className="w-4 h-4" />
-    case "Closed":
-      return <CheckCircle className="w-4 h-4" />
-    default:
-      return <FileText className="w-4 h-4" />
-  }
-}
 
 export default function AdminQueriesPage() {
-  const navigate = useNavigate()
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [categoryFilter, setCategoryFilter] = useState("all")
-  const [priorityFilter, setPriorityFilter] = useState("all")
-  const [assigneeFilter, setAssigneeFilter] = useState("all")
-  const [selectedQueries, setSelectedQueries] = useState<string[]>([])
-  const [viewMode, setViewMode] = useState<"table" | "cards">("cards")
-  const [isLoading, setIsLoading] = useState(true)
+	const navigate = useNavigate()
+	const [searchTerm, setSearchTerm] = useState("")
+	const [statusFilter, setStatusFilter] = useState("all")
+	const [categoryFilter, setCategoryFilter] = useState("all")
+	const [priorityFilter, setPriorityFilter] = useState("all")
+	const [selectedQueries, setSelectedQueries] = useState<string[]>([])
+	const [isLoading, setIsLoading] = useState(true)
+	const [queryCount, setQueryCount] = useState("05")
+	const [error, setError] = useState<string>("")
+    const [queries, setQueries] = useState<AdminQuerySummaryResponse[]>([])
+	
+	const fetchQueries = async () => {
+		try {
+			setIsLoading(true);
+			setError("");
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000)
-    return () => clearTimeout(timer)
-  }, [])
+			const response = await adminQueryService.getAllQueries({
+			page: 0,
+			size: parseInt(queryCount),
+			})
+			console.log("Fetched queries:", response.data)
+			setQueries(response.data)
+
+			
+		} catch (error: any) {
+			setError(error.message);
+			console.error("Error fetching queries:", error);
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	useEffect(() => {
+		fetchQueries();
+	}, [queryCount]);
 
   if (isLoading) {
     return <FullScreenLoader />
   }
 
-  const filteredQueries = mockQueries.filter((query) => {
+  const filteredQueries = queries.filter((query) => {
     const matchesSearch =
       query.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      query.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      query.reporter.toLowerCase().includes(searchTerm.toLowerCase())
+      query.queryId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      query.emailId.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "all" || query.status === statusFilter
-    const matchesCategory = categoryFilter === "all" || query.category === categoryFilter
+    const matchesCategory = categoryFilter === "all" || query.categoryName === categoryFilter
     const matchesPriority = priorityFilter === "all" || query.priority === priorityFilter
-    const matchesAssignee =
-      assigneeFilter === "all" ||
-      (assigneeFilter === "unassigned" && !query.assignedTo) ||
-      query.assignedTo?.toLowerCase().includes(assigneeFilter.toLowerCase())
 
-    return matchesSearch && matchesStatus && matchesCategory && matchesPriority && matchesAssignee
+    return matchesSearch && matchesStatus && matchesCategory && matchesPriority
   })
 
   const handleQueryClick = (queryId: string) => {
-    navigate(`/queries/${queryId}`)
+    navigate(`/admin/queries/${queryId}`)
   }
 
   const handleSelectQuery = (queryId: string) => {
@@ -197,14 +81,8 @@ export default function AdminQueriesPage() {
     if (selectedQueries.length === filteredQueries.length) {
       setSelectedQueries([])
     } else {
-      setSelectedQueries(filteredQueries.map((q) => q.id))
+      setSelectedQueries(filteredQueries.map((q) => q.queryId))
     }
-  }
-
-  const handleBulkAction = (action: string) => {
-    console.log(`Performing ${action} on queries:`, selectedQueries)
-    // In real app, this would make API calls
-    setSelectedQueries([])
   }
 
   return (
@@ -314,7 +192,7 @@ export default function AdminQueriesPage() {
             <div className="flex items-center space-x-2">
 			<div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-600 dark:text-gray-400">Queries :</span>
-                  <Select defaultValue="05">
+                  <Select value={queryCount} onValueChange={setQueryCount} defaultValue="05">
 						<SelectTrigger className="w-24">
 							<SelectValue />
 						</SelectTrigger>
@@ -323,7 +201,7 @@ export default function AdminQueriesPage() {
                       <SelectItem value="10">10</SelectItem>
                       <SelectItem value="15">15</SelectItem>
                       <SelectItem value="20">20</SelectItem>
-                      <SelectItem value="All">All</SelectItem>
+                      <SelectItem value="100">All</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -339,10 +217,7 @@ export default function AdminQueriesPage() {
                       <thead className="bg-gray-50 dark:bg-gray-800">
                         <tr>
                           <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                            <Checkbox
-                              checked={selectedQueries.length === filteredQueries.length && filteredQueries.length > 0}
-                              onCheckedChange={handleSelectAll}
-                            />
+                            S No.
                           </th>
                           <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
                             Query
@@ -363,40 +238,50 @@ export default function AdminQueriesPage() {
                         </tr>
                       </thead>
                       <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                        {filteredQueries.map((query) => (
-                          <tr key={query.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                            <td className="px-6 py-4 whitespace-nowrap text-center">
-                              <Checkbox
-                                checked={selectedQueries.includes(query.id)}
-                                onCheckedChange={() => handleSelectQuery(query.id)}
-                              />
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="cursor-pointer text-center" onClick={() => handleQueryClick(query.id)}>
-                                <div className="text-sm font-medium text-gray-900 dark:text-white">{query.title}</div>
-                                <div className="text-sm text-gray-500">{query.id}</div>
+                        {filteredQueries.length > 0 ? (
+                          filteredQueries.map((query, index) => (
+                            <tr key={query.queryId} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                              <td className="px-6 py-4 whitespace-nowrap text-center">
+                                {index + 1}
+                              </td>
+                              <td className="px-6 py-4 font-bold whitespace-nowrap text-center">
+                                <div className="cursor-pointer text-center " onClick={() => handleQueryClick(query.queryId)}>
+                                  <div className="text-sm font-medium text-gray-900 dark:text-white">{query.title}</div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-center">
+                                <Badge className={getStatusColor(query.status.replace("_", " "))}>{query.status.replace("_", " ")}</Badge>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-center">
+                                <Badge variant="outline" className={getPriorityColor(query.priority)}>
+                                  {query.priority}
+                                </Badge>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-center">
+                                <div className="text-sm text-gray-900 dark:text-white">{query.username}</div>
+                                <div className="text-sm text-gray-500">{query.department}</div>
+                              </td>
+                              
+                              <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                <Button variant="ghost" size="sm" onClick={() => handleQueryClick(query.queryId)}>
+                                  View
+                                </Button>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={6} className="text-center py-8">
+                              <div className="flex flex-col items-center justify-center">
+                                <FileText className="w-12 h-12 text-gray-400 mb-4" />
+                                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Queries Found</h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                  There are no queries matching your criteria.
+                                </p>
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-center">
-                              <Badge className={getStatusColor(query.status)}>{query.status}</Badge>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-center">
-                              <Badge variant="outline" className={getPriorityColor(query.priority)}>
-                                {query.priority}
-                              </Badge>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-center">
-                              <div className="text-sm text-gray-900 dark:text-white">{query.reporter}</div>
-                              <div className="text-sm text-gray-500">{query.department}</div>
-                            </td>
-                            
-                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                              <Button variant="ghost" size="sm" onClick={() => handleQueryClick(query.id)}>
-                                View
-                              </Button>
-                            </td>
                           </tr>
-                        ))}
+                        )}
                       </tbody>
                     </table>
                   </div>

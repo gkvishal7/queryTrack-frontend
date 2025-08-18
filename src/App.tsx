@@ -16,6 +16,7 @@ import SettingsPage from "./pages/SettingsPage"
 import HelpPage from "./pages/HelpPage"
 import NotFoundPage from "./pages/NotFoundPage"
 import "./App.css"
+import AdminQueryDetailPage from "./pages/AdminQueryDetailsPage"
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
           <Route path="/queries/new" element={<NewQueryPage />} />
           <Route path="/queries/:id" element={<QueryDetailPage />} />
           <Route path="/admin/queries" element={<AdminQueriesPage />} />
+          <Route path="/admin/queries/:id" element={<AdminQueryDetailPage />} />
           <Route path="/admin/users" element={<UserManagementPage />} />
           <Route path="/admin/categories" element={<CategoryManagementPage />} />
           <Route path="/admin/settings" element={<SettingsPage />} />

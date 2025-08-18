@@ -8,82 +8,71 @@ import { Link } from "react-router-dom"
 import { ModularButton } from "@/components/ModularButton"
 import { useState, useEffect } from "react"
 import FullScreenLoader from "../components/FullScreenLoader"
+import { queryService, type QuerySummaryResponse } from "../utils/query"
+import { format } from "date-fns"
+import { getStatusColor, getPriorityColor } from "../constants/constants"
 
-// Mock data
-const userStats = {
-  totalQueries: 24,
-  newQueries: 3,
-  resolvedQueries: 18,
-  inProgressQueries: 3,
+interface QueryStats {
+  totalQueries: number;
+  newQueries: number;
+  resolvedQueries: number;
+  inProgressQueries: number;
 }
 
-const recentQueries = [
-  {
-    id: "QT-001",
-    title: "Login issues with company portal",
-    status: "In Progress",
-    category: "IT Support",
-    createdAt: "2024-01-15",
-    priority: "High",
-  },
-  {
-    id: "QT-002",
-    title: "Request for additional vacation days",
-    status: "New",
-    category: "HR",
-    createdAt: "2024-01-14",
-    priority: "Medium",
-  },
-  {
-    id: "QT-003",
-    title: "Office heating system not working",
-    status: "Resolved",
-    category: "Facilities",
-    createdAt: "2024-01-13",
-    priority: "High",
-  },
-]
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "Resolved":
-      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-    case "In Progress":
-      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-    case "New":
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-    default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
-  }
-}
-
-const getPriorityColor = (priority: string) => {
-  switch (priority) {
-    case "High":
-      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-    case "Medium":
-      return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
-    case "Low":
-      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-    default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
-  }
-}
 
 export default function UserDashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [queries, setQueries] = useState<QuerySummaryResponse[]>([])
+  const [stats, setStats] = useState<QueryStats>({
+    totalQueries: 0,
+    newQueries: 0,
+    resolvedQueries: 0,
+    inProgressQueries: 0
+  })
+  const [error, setError] = useState<string>("")
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000)
-    return () => clearTimeout(timer)
+    fetchQueries()
   }, [])
+
+  const fetchQueries = async () => {
+    try {
+      const response = await queryService.getQueries()
+      setQueries(response.data)
+      
+      // Calculate stats from queries
+      const totalQueries = response.data.length
+      const newQueries = response.data.filter(q => q.status === "OPEN").length
+      const resolvedQueries = response.data.filter(q => q.status === "RESOLVED").length
+      const inProgressQueries = response.data.filter(q => q.status === "IN_PROGRESS").length
+
+      setStats({
+        totalQueries,
+        newQueries,
+        resolvedQueries,
+        inProgressQueries
+      })
+
+      setIsLoading(false)
+    } catch (error: any) {
+      setError(error.message)
+      setIsLoading(false)
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    return format(new Date(dateString), 'yyyy-MM-dd')
+  }
 
   if (isLoading) {
     return <FullScreenLoader />
   }
 
-  const resolutionRate = Math.round((userStats.resolvedQueries / userStats.totalQueries) * 100)
+  const resolutionRate = stats.totalQueries > 0 
+    ? Math.round((stats.resolvedQueries / stats.totalQueries) * 100)
+    : 0
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
@@ -131,7 +120,7 @@ export default function UserDashboard() {
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{userStats.totalQueries}</div>
+                <div className="text-2xl font-bold">{stats.totalQueries}</div>
                 <p className="text-xs text-muted-foreground">
                   Queries
                 </p>
@@ -144,7 +133,7 @@ export default function UserDashboard() {
                 <Clock className="h-4 w-4 text-yellow-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-yellow-600">{userStats.newQueries}</div>
+                <div className="text-2xl font-bold text-yellow-600">{stats.newQueries}</div>
                 <p className="text-xs text-muted-foreground">Awaiting response</p>
               </CardContent>
             </Card>
@@ -155,7 +144,7 @@ export default function UserDashboard() {
                 <AlertCircle className="h-4 w-4 text-blue-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{userStats.inProgressQueries}</div>
+                <div className="text-2xl font-bold text-blue-600">{stats.inProgressQueries}</div>
                 <p className="text-xs text-muted-foreground">Being worked on</p>
               </CardContent>
             </Card>
@@ -166,7 +155,7 @@ export default function UserDashboard() {
                 <CheckCircle className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{userStats.resolvedQueries}</div>
+                <div className="text-2xl font-bold text-green-600">{stats.resolvedQueries}</div>
                 <p className="text-xs text-muted-foreground">Successfully completed</p>
               </CardContent>
             </Card>
@@ -183,41 +172,58 @@ export default function UserDashboard() {
                 
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {recentQueries.map((query) => (
-                    <Link key={query.id} to={`/queries/${query.id}`}>
-                      <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <span className="text-sm font-mono text-gray-500">{query.id}</span>
-                            <Badge className={getStatusColor(query.status)}>{query.status}</Badge>
-                            <Badge variant="outline" className={getPriorityColor(query.priority)}>
-                              {query.priority}
-                            </Badge>
+                {queries.length > 0 ? (
+                  <>
+                    <div className="space-y-4">
+                      {queries.slice(0, 5).map((query) => (
+                        <Link key={query.queryId} to={`/queries/${query.queryId}`}>
+                          <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <Badge className={getStatusColor(query.status.replace("_", " "))}>{query.status.replace("_", " ")}</Badge>
+                                <Badge variant="outline" className={getPriorityColor(query.priority)}>
+                                  {query.priority}
+                                </Badge>
+                              </div>
+                              <h3 className="font-semibold text-gray-900 dark:text-white mb-1">{query.title}</h3>
+                              <div className="flex items-center text-sm text-gray-500 space-x-4">
+                                <span className="flex items-center">
+                                  <User className="w-3 h-3 mr-1" />
+                                  {query.categoryName}
+                                </span>
+                                <span className="flex items-center">
+                                  <Calendar className="w-3 h-3 mr-1" />
+                                  {formatDate(query.dateTime)}
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                          <h3 className="font-medium text-gray-900 dark:text-white mb-1">{query.title}</h3>
-                          <div className="flex items-center text-sm text-gray-500 space-x-4">
-                            <span className="flex items-center">
-                              <User className="w-3 h-3 mr-1" />
-                              {query.category}
-                            </span>
-                            <span className="flex items-center">
-                              <Calendar className="w-3 h-3 mr-1" />
-                              {query.createdAt}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                        </Link>
+                      ))}
+                    </div>
+                    <div className="mt-4">
+                      <Link to="/queries">
+                        <Button variant="outline" className="w-full">
+                          View All Queries
+                        </Button>
+                      </Link>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <FileText className="w-12 h-12 text-gray-400 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Queries Yet</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                      You haven't raised any queries yet. Create your first query to get started.
+                    </p>
+                    <Link to="/queries/new">
+                      <Button className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create New Query
+                      </Button>
                     </Link>
-                  ))}
-                </div>
-                <div className="mt-4">
-                  <Link to="/queries">
-                    <Button variant="outline" className="w-full">
-                      View All Queries
-                    </Button>
-                  </Link>
-                </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -239,15 +245,15 @@ export default function UserDashboard() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-400">Resolved</span>
-                    <span className="font-medium">{userStats.resolvedQueries}</span>
+                    <span className="font-medium">{stats.resolvedQueries}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-400">In Progress</span>
-                    <span className="font-medium">{userStats.inProgressQueries}</span>
+                    <span className="font-medium">{stats.inProgressQueries}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-400">New</span>
-                    <span className="font-medium">{userStats.newQueries}</span>
+                    <span className="font-medium">{stats.newQueries}</span>
                   </div>
                 </div>
               </CardContent>

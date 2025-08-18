@@ -1,7 +1,3 @@
-"use client"
-
-import type React from "react"
-
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "../components/ui/button"
@@ -26,40 +22,8 @@ import {
   Menu,
 } from "lucide-react"
 import { ModularButton } from "@/components/ModularButton"
-import { ModularInput } from "@/components/ModularInput"
-
-const categories = [
-  {
-    value: "it",
-    label: "IT Support",
-    description: "Technical issues, software problems, hardware requests, network connectivity",
-    icon: "💻",
-  },
-  {
-    value: "hr",
-    label: "Human Resources",
-    description: "Policy questions, benefits, workplace issues, employment matters",
-    icon: "👥",
-  },
-  {
-    value: "facilities",
-    label: "Facilities",
-    description: "Building maintenance, office supplies, workspace issues, security",
-    icon: "🏢",
-  },
-  {
-    value: "finance",
-    label: "Finance",
-    description: "Expense reports, budget questions, payment issues, accounting",
-    icon: "💰",
-  },
-  {
-    value: "general",
-    label: "General",
-    description: "Other inquiries not covered by specific categories",
-    icon: "📋",
-  },
-]
+import { queryService } from "../utils/query"
+import { categories } from "../constants/constants"
 
 const priorities = [
   {
@@ -92,12 +56,6 @@ const priorities = [
   },
 ]
 
-interface AttachedFile {
-  id: string
-  name: string
-  size: number
-  type: string
-}
 
 export default function NewQueryPage() {
   const navigate = useNavigate()
@@ -112,7 +70,7 @@ export default function NewQueryPage() {
     description: "",
     category: "",
     priority: "medium",
-    attachments: [] as AttachedFile[],
+    // attachments: [] as AttachedFile[],
   })
 
   const totalSteps = 3
@@ -122,41 +80,41 @@ export default function NewQueryPage() {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files
-    if (files) {
-      const newFiles: AttachedFile[] = Array.from(files).map((file) => ({
-        id: Math.random().toString(36).substr(2, 9),
-        name: file.name,
-        size: file.size,
-        type: file.type,
-      }))
-      setFormData((prev) => ({
-        ...prev,
-        attachments: [...prev.attachments, ...newFiles],
-      }))
-    }
-  }
+  // const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   const files = event.target.files
+  //   if (files) {
+  //     const newFiles: AttachedFile[] = Array.from(files).map((file) => ({
+  //       id: Math.random().toString(36).substr(2, 9),
+  //       name: file.name,
+  //       size: file.size,
+  //       type: file.type,
+  //     }))
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       attachments: [...prev.attachments, ...newFiles],
+  //     }))
+  //   }
+  // }
 
-  const removeFile = (fileId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      attachments: prev.attachments.filter((file) => file.id !== fileId),
-    }))
-  }
+  // const removeFile = (fileId: string) => {
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     attachments: prev.attachments.filter((file) => file.id !== fileId),
+  //   }))
+  // }
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes"
-    const k = 1024
-    const sizes = ["Bytes", "KB", "MB", "GB"]
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
-  }
+  // const formatFileSize = (bytes: number) => {
+  //   if (bytes === 0) return "0 Bytes"
+  //   const k = 1024
+  //   const sizes = ["Bytes", "KB", "MB", "GB"]
+  //   const i = Math.floor(Math.log(bytes) / Math.log(k))
+  //   return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
+  // }
 
-  const getFileIcon = (type: string) => {
-    if (type.startsWith("image/")) return <ImageIcon className="w-4 h-4" />
-    return <FileText className="w-4 h-4" />
-  }
+  // const getFileIcon = (type: string) => {
+  //   if (type.startsWith("image/")) return <ImageIcon className="w-4 h-4" />
+  //   return <FileText className="w-4 h-4" />
+  // }
 
   const canProceedToNext = () => {
     switch (currentStep) {
@@ -186,16 +144,31 @@ export default function NewQueryPage() {
   const handleSubmit = async () => {
     setIsSubmitting(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    try {
+      // Prepare the request body according to QueryCreateRequest interface
+      const queryData = {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category, // Match backend expected format
+        priority: formData.priority  // Match backend expected format
+      }
 
-    setIsSubmitting(false)
-    setShowSuccess(true)
-
-    // Redirect after success animation
-    setTimeout(() => {
-      navigate("/queries")
-    }, 2000)
+      // Make API call
+      const response = await queryService.createQuery(queryData)
+      console.log('Query created successfully:', response)
+      
+      setShowSuccess(true)
+      // Redirect after success animation
+      setTimeout(() => {
+        navigate("/queries")
+      }, 2000)
+    } catch (error: any) {
+      console.error('Error creating query:', error)
+      // You might want to show an error message to the user here
+      alert(error.message || 'Failed to create query. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const selectedCategory = categories.find((cat) => cat.value === formData.category)
@@ -331,7 +304,7 @@ export default function NewQueryPage() {
                       
                     </div>
 
-                    <div className="space-y-2">
+                    {/* <div className="space-y-2">
                       <Label className="text-left block">Attachments (Optional)</Label>
                       <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-teal-400 transition-colors">
                         <Paperclip className="w-8 h-8 text-gray-400 mx-auto mb-2" />
@@ -356,7 +329,7 @@ export default function NewQueryPage() {
                         </p>
                       </div>
 
-                      {/* Attached Files */}
+                     
                       {formData.attachments.length > 0 && (
                         <div className="space-y-2">
                           <Label>Attached Files ({formData.attachments.length})</Label>
@@ -381,7 +354,7 @@ export default function NewQueryPage() {
                           </div>
                         </div>
                       )}
-                    </div>
+                    </div> */}
                   </CardContent>
                 </Card>
               )}
@@ -500,7 +473,7 @@ export default function NewQueryPage() {
                         </div>
                       </div>
 
-                      {formData.attachments.length > 0 && (
+                      {/* {formData.attachments.length > 0 && (
                         <div>
                           <Label className="text-sm font-medium text-gray-500">
                             Attachments ({formData.attachments.length})
@@ -518,7 +491,7 @@ export default function NewQueryPage() {
                             ))}
                           </div>
                         </div>
-                      )}
+                      )} */}
                     </div>
                   </CardContent>
                 </Card>

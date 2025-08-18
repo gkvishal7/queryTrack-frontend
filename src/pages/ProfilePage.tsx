@@ -1,90 +1,94 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
 import { Input } from "../components/ui/input"
 import { Label } from "../components/ui/label"
-import { Textarea } from "../components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
-import { Switch } from "../components/ui/switch"
-import { Separator } from "../components/ui/separator"
-import { Badge } from "../components/ui/badge"
 import { Sidebar } from "../components/Sidebar"
-import { User, Mail, MapPin, Bell, Shield, Key, Save, Camera, Edit, Menu } from "lucide-react"
+import { User, Shield, Key, Edit, Menu, Save } from "lucide-react"
 import { ModularButton } from "@/components/ModularButton"
-
-// Mock user data
-const mockUser = {
-  id: "user-123",
-  firstName: "John",
-  lastName: "Smith",
-  email: "john.smith@company.com",
-  phone: "+1 (555) 123-4567",
-  department: "Marketing",
-  role: "Senior Marketing Manager",
-  location: "New York, NY",
-  bio: "Experienced marketing professional with over 8 years in digital marketing and brand management. Passionate about data-driven marketing strategies and team leadership.",
-  avatar: "/placeholder.svg?height=100&width=100",
-  joinedDate: "2022-03-15",
-  lastLogin: "2024-01-15T14:30:00Z",
-  preferences: {
-    emailNotifications: true,
-    pushNotifications: false,
-    weeklyDigest: true,
-    queryUpdates: true,
-    systemMaintenance: false,
-  },
-  stats: {
-    totalQueries: 24,
-    resolvedQueries: 18,
-    avgResolutionTime: "2.3 days",
-  },
-}
+import { Profile, profileService } from "../utils/profile"
+import FullScreenLoader from "../components/FullScreenLoader";
 
 export default function ProfilePage() {
-  const [user, setUser] = useState(mockUser)
+  const [user, setUser] = useState<Profile | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string>("")
   const [activeTab, setActiveTab] = useState("profile")
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  const handleSave = async () => {
-    setIsSaving(true)
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    setIsSaving(false)
-    setIsEditing(false)
-  }
+  // Fetch user profile
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setIsLoading(true)
+        setError("")
+        const response = await profileService.getProfile()
+        setUser(response.data)
+      } catch (error: any) {
+        setError(error.message || "Failed to fetch profile")
+        console.error("Error fetching profile:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
 
-  const handleInputChange = (field: string, value: string | boolean) => {
-    if (field.startsWith("preferences.")) {
-      const prefField = field.split(".")[1]
-      setUser((prev) => ({
-        ...prev,
-        preferences: {
-          ...prev.preferences,
-          [prefField]: value,
-        },
-      }))
-    } else {
-      setUser((prev) => ({ ...prev, [field]: value }))
+    fetchProfile()
+  }, [])
+
+  const handleSave = async () => {
+    if (!user) return;
+    
+    try {
+      setIsSaving(true)
+      const response = await profileService.updateProfile({
+        emailId: user.emailId,
+        username: user.username,
+        department: user.department,
+        phoneNumber: user.phoneNumber,
+      })
+      setUser(response.data)
+      setIsEditing(false)
+    } catch (error: any) {
+      console.error("Error updating profile:", error)
+      setError(error.message || "Failed to update profile")
+    } finally {
+      setIsSaving(false)
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+  const handleInputChange = (field: string, value: string) => {
+    if (!user) return;
+    
+    setUser((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        [field]: value
+      }
     })
   }
 
   const tabs = [
     { id: "profile", label: "Profile", icon: User },
-    
     { id: "security", label: "Security", icon: Shield },
   ]
+
+  if (isLoading) {
+    return <FullScreenLoader />
+  }
+
+  if (isSaving) {
+    return <FullScreenLoader message="Saving changes..." />
+  }
+
+  if (!user || error) {
+    return <FullScreenLoader message={error || "Failed to load profile"} />
+  }
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
@@ -151,25 +155,16 @@ export default function ProfilePage() {
               <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
                 <div className="relative">
                   <img
-                    src={user.avatar || "/placeholder.svg"}
-                    alt={`${user.firstName} ${user.lastName}`}
+                    src="/placeholder.svg"
+                    alt={user?.username}
                     className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white shadow-lg"
                   />
-                  {isEditing && (
-                    <Button
-                      size="sm"
-                      className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0"
-                      variant="outline"
-                    >
-                      <Camera className="w-4 h-4" />
-                    </Button>
-                  )}
                 </div>
                 <div className="flex-1 text-center sm:text-left">
                   <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">
-                    {user.firstName} {user.lastName}
+                    {user?.username}
                   </h2>
-                  <p className="text-gray-500 text-xs sm:text-sm">{user.department}</p>
+                  <p className="text-gray-500 text-xs sm:text-sm">{user?.department}</p>
                 </div>
               </div>
             </CardContent>
@@ -179,12 +174,23 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-6">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Queries</CardTitle>
+                <CardTitle className="text-sm font-medium">Open Queries</CardTitle>
                 <User className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{user.stats.totalQueries}</div>
-                <p className="text-xs text-muted-foreground">Queries submitted</p>
+                <div className="text-2xl font-bold">{user?.queryStats?.openQueriesCount || 0}</div>
+                <p className="text-xs text-muted-foreground">Awaiting response</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+                <Shield className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">{user?.queryStats?.inProgressQueriesCount || 0}</div>
+                <p className="text-xs text-muted-foreground">Currently being processed</p>
               </CardContent>
             </Card>
 
@@ -194,19 +200,8 @@ export default function ProfilePage() {
                 <Shield className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{user.stats.resolvedQueries}</div>
-                <p className="text-xs text-muted-foreground">Successfully resolved</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Avg Resolution</CardTitle>
-                <Bell className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{user.stats.avgResolutionTime}</div>
-                <p className="text-xs text-muted-foreground">Average time to resolve</p>
+                <div className="text-2xl font-bold text-green-600">{user?.queryStats?.resolvedQueriesCount || 0}</div>
+                <p className="text-xs text-muted-foreground">Successfully completed</p>
               </CardContent>
             </Card>
           </div>
@@ -233,25 +228,14 @@ export default function ProfilePage() {
                   <CardTitle>Personal Information</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="gap-4">
-                    <div className="space-y-2">
-                      <Label className = "block text-left text-md" htmlFor="firstName">First Name</Label>
-                      <Input
-                        id="firstName"
-                        value={user.firstName}
-                        onChange={(e) => handleInputChange("firstName", e.target.value)}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    {/* <div className="space-y-2">
-                      <Label className = "block text-left text-md" htmlFor="lastName">Last Name</Label>
-                      <Input
-                        id="lastName"
-                        value={user.lastName}
-                        onChange={(e) => handleInputChange("lastName", e.target.value)}
-                        disabled={!isEditing}
-                      />
-                    </div> */}
+                  <div className="space-y-2">
+                    <Label className="block text-left text-md" htmlFor="username">Username</Label>
+                    <Input
+                      id="username"
+                      value={user?.username || ''}
+                      onChange={(e) => handleInputChange("username", e.target.value)}
+                      disabled={!isEditing}
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -259,8 +243,8 @@ export default function ProfilePage() {
                     <Input
                       id="email"
                       type="email"
-                      value={user.email}
-                      onChange={(e) => handleInputChange("email", e.target.value)}
+                      value={user?.emailId || ''}
+                      onChange={(e) => handleInputChange("emailId", e.target.value)}
                       disabled={!isEditing}
                     />
                   </div>
@@ -270,15 +254,21 @@ export default function ProfilePage() {
                       <Label className = "block text-left text-md" htmlFor="phone">Phone Number</Label>
                       <Input
                         id="phone"
-                        value={user.phone}
-                        onChange={(e) => handleInputChange("phone", e.target.value)}
+                        value={user?.phoneNumber || ''}
+                        onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
                         disabled={!isEditing}
                       />
                     </div>
-                    
-                    <div className="space-y-2">
-                      <Label className = "block text-left text-md" htmlFor="department">Department</Label>
-                      <Select value={user.department} disabled={!isEditing}>
+
+                    {
+                      isEditing ? (
+                        <div className="space-y-2">
+                      <Label className="block text-left text-md" htmlFor="department">Department</Label>
+                      <Select 
+                        value={user?.department || 'Depar'} 
+                        onValueChange={(value) => handleInputChange("department", value)} 
+                        disabled={!isEditing}
+                      >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -292,6 +282,15 @@ export default function ProfilePage() {
                         </SelectContent>
                       </Select>
                     </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Label className="block text-left text-md">Department</Label>
+                          <p className="text-gray-500">{user?.department || 'N/A'}</p>
+                        </div>
+                      )
+                    }
+                    
+                    
                     
                   </div>
                 </CardContent>

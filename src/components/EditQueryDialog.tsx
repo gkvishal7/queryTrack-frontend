@@ -89,9 +89,9 @@ interface AttachedFile {
 interface QueryData {
   title: string
   description: string
-  category: string
+  categoryName: string
   priority: string
-  attachments: AttachedFile[]
+  // attachments: AttachedFile[]
 }
 
 interface EditQueryDialogProps {
@@ -115,41 +115,41 @@ export default function EditQueryDialog({
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files
-    if (files) {
-      const newFiles: AttachedFile[] = Array.from(files).map((file) => ({
-        id: Math.random().toString(36).substr(2, 9),
-        name: file.name,
-        size: file.size,
-        type: file.type,
-      }))
-      setFormData((prev) => ({
-        ...prev,
-        attachments: [...prev.attachments, ...newFiles],
-      }))
-    }
-  }
+  // const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   const files = event.target.files
+  //   if (files) {
+  //     const newFiles: AttachedFile[] = Array.from(files).map((file) => ({
+  //       id: Math.random().toString(36).substr(2, 9),
+  //       name: file.name,
+  //       size: file.size,
+  //       type: file.type,
+  //     }))
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       attachments: [...prev.attachments, ...newFiles],
+  //     }))
+  //   }
+  // }
 
-  const removeFile = (fileId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      attachments: prev.attachments.filter((file) => file.id !== fileId),
-    }))
-  }
+  // const removeFile = (fileId: string) => {
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     attachments: prev.attachments.filter((file) => file.id !== fileId),
+  //   }))
+  // }
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes"
-    const k = 1024
-    const sizes = ["Bytes", "KB", "MB", "GB"]
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
-  }
+  // const formatFileSize = (bytes: number) => {
+  //   if (bytes === 0) return "0 Bytes"
+  //   const k = 1024
+  //   const sizes = ["Bytes", "KB", "MB", "GB"]
+  //   const i = Math.floor(Math.log(bytes) / Math.log(k))
+  //   return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
+  // }
 
-  const getFileIcon = (type: string) => {
-    if (type.startsWith("image/")) return <ImageIcon className="w-4 h-4" />
-    return <FileText className="w-4 h-4" />
-  }
+  // const getFileIcon = (type: string) => {
+  //   if (type.startsWith("image/")) return <ImageIcon className="w-4 h-4" />
+  //   return <FileText className="w-4 h-4" />
+  // }
 
   const handleSave = () => {
     onSave(formData)
@@ -206,7 +206,7 @@ export default function EditQueryDialog({
               <Label className="block text-left font-semibold text-md">
                 Select Category <span className="text-red-700">*</span>
               </Label>
-              <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
+              <Select value={formData.categoryName} onValueChange={(value) => handleInputChange("categoryName", value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
@@ -246,7 +246,7 @@ export default function EditQueryDialog({
           </div>
 
           {/* Attachments */}
-          <div className="space-y-4">
+          {/* <div className="space-y-4">
             <Label className="text-left block">Attachments</Label>
             <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center hover:border-teal-400 transition-colors">
               <Paperclip className="w-6 h-6 text-gray-400 mx-auto mb-2" />
@@ -266,10 +266,10 @@ export default function EditQueryDialog({
                   <span>Choose Files</span>
                 </Button>
               </Label>
-            </div>
+            </div> */}
 
             {/* Attached Files */}
-            {formData.attachments.length > 0 && (
+            {/* {formData.attachments.length > 0 && (
               <div className="space-y-2">
                 <Label>Attached Files ({formData.attachments.length})</Label>
                 <div className="space-y-2">
@@ -292,8 +292,8 @@ export default function EditQueryDialog({
                   ))}
                 </div>
               </div>
-            )}
-          </div>
+            )} */}
+          {/* </div> */}
         </div>
 
         {/* Footer */}
@@ -303,7 +303,7 @@ export default function EditQueryDialog({
           </Button>
           <Button
             onClick={handleSave}
-            disabled={isSaving || !formData.title.trim() || !formData.description.trim() || !formData.category}
+            disabled={isSaving || !formData.title.trim() || !formData.description.trim() || !formData.categoryName}
             className="bg-gradient-to-r from-teal-600 to-green-600 hover:from-teal-700 hover:to-green-700"
           >
             {isSaving ? (

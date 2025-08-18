@@ -44,8 +44,11 @@ export default function LoginPage() {
       const response = await authService.login(formData);
   
       console.log("Login successful:", response.data.emailId, response.data.username);
-  
-      navigate("/dashboard");
+      if(response.data.role === "ADMIN") {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (error: any) {
       console.error("Login error:", error);
       setError(error.message || "Login failed. Please try again.");

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Link, useLocation } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { Button } from "./ui/button"
 import { Separator } from "./ui/separator"
 import {Home, FileText, Plus, Users, Settings, HelpCircle,
@@ -17,6 +17,7 @@ import {Home, FileText, Plus, Users, Settings, HelpCircle,
   Zap,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { authService } from "@/utils/auth"
 
 interface SidebarProps {
   userRole: "user" | "admin"
@@ -24,6 +25,7 @@ interface SidebarProps {
 
 export function Sidebar({ userRole }: SidebarProps) {
   const location = useLocation()
+  const navigate = useNavigate()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
 
@@ -179,18 +181,26 @@ export function Sidebar({ userRole }: SidebarProps) {
         {!isCollapsed && <Separator />}
 
         {/* Logout */}
-        <Link to="/">
-          <Button
-            variant="ghost"
-            className={cn(
-              "w-full justify-start  hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20",
-              isCollapsed && "justify-center",
-            )}
-          >
-            <LogOut className={cn("w-5 h-5", !isCollapsed && "mr-3")} />
-            {!isCollapsed && <span>Logout</span>}
-          </Button>
-        </Link>
+        <Button
+          variant="ghost"
+          onClick={async () => {
+            try {
+              await authService.logout();
+              navigate('/'); // Redirect to home page after successful logout
+            } catch (error) {
+              console.error('Logout failed:', error);
+              // Still redirect to home page even if logout fails
+              navigate('/');
+            }
+          }}
+          className={cn(
+            "w-full justify-start  hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20",
+            isCollapsed && "justify-center",
+          )}
+        >
+          <LogOut className={cn("w-5 h-5", !isCollapsed && "mr-3")} />
+          {!isCollapsed && <span>Logout</span>}
+        </Button>
       </div>
     </div>
   )

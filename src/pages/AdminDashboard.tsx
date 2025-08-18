@@ -14,18 +14,10 @@ import {
 import { Link } from "react-router-dom"
 import { useState, useEffect } from "react"
 import FullScreenLoader from "../components/FullScreenLoader"
-
-// Mock data for admin dashboard
-const adminStats = {
-  totalQueries: 156,
-  pendingQueries: 23,
-  inProgressQueries: 34,
-  resolvedQueries: 99,
-  overdueQueries: 8,
-  totalUsers: 89,
-  avgResolutionTime: "2.3 days",
-  resolutionRate: 85,
-}
+import { getStatusColor, getPriorityColor } from "../constants/constants"
+import {adminQueryService, type AdminQuerySummaryResponse } from "@/utils/admin"
+import { format } from "date-fns"
+// import { QueryStats } from "@/utils/profile"
 
 const categoryStats = [
   { name: "IT Support", count: 45, percentage: 29, trend: "up" },
@@ -35,73 +27,58 @@ const categoryStats = [
   { name: "Finance", count: 26, percentage: 16, trend: "down" },
 ]
 
-const recentQueries = [
-  {
-    id: "QT-156",
-    title: "Network connectivity issues in Building A",
-    status: "Pending",
-    category: "IT Support",
-    reporter: "John Smith",
-    assignedTo: "IT Team",
-    priority: "High",
-    createdAt: "2024-01-15",
-  },
-  {
-    id: "QT-155",
-    title: "Request for remote work policy clarification",
-    status: "In Progress",
-    category: "HR",
-    reporter: "Sarah Johnson",
-    assignedTo: "HR Team",
-    priority: "Medium",
-    createdAt: "2024-01-15",
-  },
-  {
-    id: "QT-154",
-    title: "Conference room booking system malfunction",
-    status: "Resolved",
-    category: "Facilities",
-    reporter: "Mike Davis",
-    assignedTo: "Facilities Team",
-    priority: "Low",
-    createdAt: "2024-01-14",
-  },
-]
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "Resolved":
-      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-    case "In Progress":
-      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-    case "Pending":
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-    default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
-  }
-}
-
-const getPriorityColor = (priority: string) => {
-  switch (priority) {
-    case "High":
-      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-    case "Medium":
-      return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
-    case "Low":
-      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-    default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
-  }
+interface QueryStats {
+  totalQueries: number;
+  newQueries: number;
+  resolvedQueries: number;
+  inProgressQueries: number;
 }
 
 export default function AdminDashboard() {
-  const [isLoading, setIsLoading] = useState(true)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+    const [isLoading, setIsLoading] = useState(true)
+    const [sidebarOpen, setSidebarOpen] = useState(false)
+    const [queries, setQueries] = useState<AdminQuerySummaryResponse[]>([])
+    const [stats, setStats] = useState<QueryStats>({
+      totalQueries: 0,
+      newQueries: 0,
+      resolvedQueries: 0,
+      inProgressQueries: 0
+    })
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000)
-    return () => clearTimeout(timer)
-  }, [])
+	const [error, setError] = useState<string>("")
+
+	useEffect(() => {
+		fetchQueries()
+	}, [])
+
+	const fetchQueries = async () => {
+	try {
+		const response = await adminQueryService.getAllQueries()
+		setQueries(response.data)
+		
+		// Calculate stats from queries
+		const totalQueries = response.data.length
+		const newQueries = response.data.filter(q => q.status === "OPEN").length
+		const resolvedQueries = response.data.filter(q => q.status === "RESOLVED").length
+		const inProgressQueries = response.data.filter(q => q.status === "IN_PROGRESS").length
+
+		setStats({
+		totalQueries,
+		newQueries,
+		resolvedQueries,
+		inProgressQueries
+		})
+
+		setIsLoading(false)
+	} catch (error: any) {
+		setError(error.message)
+		setIsLoading(false)
+	}
+	}
+
+	const formatDate = (dateString: string) => {
+		return format(new Date(dateString), 'yyyy-MM-dd')
+	}
 
   if (isLoading) {
     return <FullScreenLoader />
@@ -163,7 +140,7 @@ export default function AdminDashboard() {
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{adminStats.totalQueries}</div>
+                <div className="text-2xl font-bold">{stats.totalQueries}</div>
                 <p className="text-xs text-muted-foreground">
                   <TrendingUp className="w-3 h-3 inline mr-1" />
                   +12% from last month
@@ -177,7 +154,7 @@ export default function AdminDashboard() {
                 <Clock className="h-4 w-4 text-yellow-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-yellow-600">{adminStats.pendingQueries}</div>
+                <div className="text-2xl font-bold text-yellow-600">{stats.newQueries}</div>
                 <p className="text-xs text-muted-foreground">Requires immediate attention</p>
               </CardContent>
             </Card>
@@ -188,18 +165,18 @@ export default function AdminDashboard() {
                 <AlertTriangle className="h-4 w-4 text-red-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">{adminStats.overdueQueries}</div>
+                <div className="text-2xl font-bold text-red-600">{stats.inProgressQueries}</div>
                 <p className="text-xs text-muted-foreground">Past due date</p>
               </CardContent>
             </Card>
 
             <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Resolution Rate</CardTitle>
+                <CardTitle className="text-sm font-medium">Resolved Queries</CardTitle>
                 <CheckCircle className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{adminStats.resolutionRate}%</div>
+                <div className="text-2xl font-bold text-green-600">{stats.resolvedQueries}%</div>
                 <p className="text-xs text-muted-foreground">Average resolution rate</p>
               </CardContent>
             </Card>
@@ -217,23 +194,18 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 md:space-y-4">
-                  {recentQueries.map((query) => (
-                    <Link key={query.id} to={`/queries/${query.id}`}>
+                  {queries.map((query) => (
+                    <Link key={query.queryId} to={`/queries/${query.queryId}`}>
                       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-2 md:p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer gap-2">
                         <div className="flex-1">
                           <div className="flex flex-wrap items-center space-x-2 mb-2">
-                            <span className="text-xs md:text-sm font-mono text-gray-500">{query.id}</span>
-                            <Badge className={getStatusColor(query.status)}>{query.status}</Badge>
+                            <Badge className={getStatusColor(query.status.replace("_", " "))}>{query.status.replace("_", " ")}</Badge>
                             <Badge variant="outline" className={getPriorityColor(query.priority)}>
                               {query.priority}
                             </Badge>
                           </div>
                           <div className="text-base md:text-lg font-semibold text-gray-900 dark:text-white">{query.title}</div>
-                          <div className="text-xs md:text-sm text-gray-500">{query.category} | {query.createdAt}</div>
-                        </div>
-                        <div className="flex flex-col items-end space-y-1">
-                          <div className="text-xs md:text-sm text-gray-500">Assigned: {query.assignedTo}</div>
-                          <div className="text-xs md:text-sm text-gray-500">Reporter: {query.reporter}</div>
+                          <div className="text-xs md:text-sm text-gray-500">{query.categoryName} | {formatDate(query.dateTime)}</div>
                         </div>
                       </div>
                     </Link>

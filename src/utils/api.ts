@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import { AuthResponse } from './auth';
 
 // API configuration interface
 interface ApiConfig {
@@ -30,8 +31,11 @@ api.interceptors.request.use(
 
     if (!isPublicEndpoint) {
       // Add authentication token if available
-      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-      if (token && config.headers) {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      if (config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
@@ -43,6 +47,7 @@ api.interceptors.request.use(
 
     if (import.meta.env.DEV) {
       console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+      console.log('Request Headers:', config.headers);
     }
 
     return config;
@@ -53,11 +58,113 @@ api.interceptors.request.use(
   }
 );
 
+// Track if we're currently refreshing to prevent multiple refresh calls
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
+
+// Helper to add request to subscribers
+const addSubscriber = (callback: (token: string) => void) => {
+  refreshSubscribers.push(callback);
+};
+
+// Helper to retry failed requests
+const retryFailedRequests = (token: string) => {
+  refreshSubscribers.forEach(callback => callback(token));
+  refreshSubscribers = [];
+};
+
+// Response interceptor
+api.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as any;
+
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      // Check if it's a public endpoint
+      const isPublicEndpoint = publicEndpoints.some((endpoint) =>
+        originalRequest.url?.includes(endpoint)
+      );
+
+      if (!isPublicEndpoint) {
+        originalRequest._retry = true;
+
+        if (!isRefreshing) {
+          isRefreshing = true;
+
+          try {
+            // Attempt to refresh the token
+            const newToken = await refreshAccessToken();
+            
+            // Update header for the original request
+            originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+            
+            // Notify all subscribers with new token
+            retryFailedRequests(newToken);
+            
+            // Retry the original request
+            return api(originalRequest);
+          } catch (refreshError: any) {
+            // If refresh fails, reject all subscribers
+            refreshSubscribers = [];
+            return Promise.reject(refreshError);
+          } finally {
+            isRefreshing = false;
+          }
+        } else {
+          // If we're already refreshing, wait for the new token
+          return new Promise(resolve => {
+            addSubscriber(token => {
+              originalRequest.headers['Authorization'] = `Bearer ${token}`;
+              resolve(api(originalRequest));
+            });
+          });
+        }
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 // Export the configured axios instance
 export default api;
 
 // Export types for use in components
 export type { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError };
+
+// Function to refresh token
+const refreshAccessToken = async () => {
+  try {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) {
+      throw new Error('No refresh token available');
+    }
+
+    const response = await axios.post<AuthResponse>(
+      `${defaultConfig.baseURL}/public/refresh`,
+      { refreshToken }
+    );
+
+    if (response.data.data.accessToken) {
+      localStorage.setItem('accessToken', response.data.data.accessToken);
+      if (response.data.data.refreshToken) {
+        localStorage.setItem('refreshToken', response.data.data.refreshToken);
+      }
+      return response.data.data.accessToken;
+    }
+
+    throw new Error('No access token in refresh response');
+  } catch (error: any) {
+    if (error.response?.status === 401) {
+      // Refresh token has expired
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      window.location.href = '/login';
+      throw new Error('Please Login Again to Continue');
+    }
+    throw error;
+  }
+};
 
 // Export common HTTP methods for convenience
 export const http = {
