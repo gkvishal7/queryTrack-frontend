@@ -11,7 +11,7 @@ import {
   TrendingUp,
   Menu,
 } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
 import FullScreenLoader from "../components/FullScreenLoader"
 import { getStatusColor, getPriorityColor } from "../constants/constants"
@@ -35,6 +35,7 @@ interface QueryStats {
 }
 
 export default function AdminDashboard() {
+	const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(true)
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [queries, setQueries] = useState<AdminQuerySummaryResponse[]>([])
@@ -52,7 +53,7 @@ export default function AdminDashboard() {
 	}, [])
 
 	const fetchQueries = async () => {
-	try {
+		try {
 		const response = await adminQueryService.getAllQueries()
 		setQueries(response.data)
 		
@@ -70,10 +71,14 @@ export default function AdminDashboard() {
 		})
 
 		setIsLoading(false)
-	} catch (error: any) {
+		} catch (error: any) {
 		setError(error.message)
 		setIsLoading(false)
+		}
 	}
+
+	const handleQueryClick = (queryId: string) => {
+		navigate(`/admin/queries/${queryId}`)
 	}
 
 	const formatDate = (dateString: string) => {
@@ -195,7 +200,7 @@ export default function AdminDashboard() {
               <CardContent>
                 <div className="space-y-2 md:space-y-4">
                   {queries.map((query) => (
-                    <Link key={query.queryId} to={`/queries/${query.queryId}`}>
+                    <div key={query.queryId} onClick={() => handleQueryClick(query.queryId)}>
                       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-2 md:p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer gap-2">
                         <div className="flex-1">
                           <div className="flex flex-wrap items-center space-x-2 mb-2">
@@ -208,7 +213,7 @@ export default function AdminDashboard() {
                           <div className="text-xs md:text-sm text-gray-500">{query.categoryName} | {formatDate(query.dateTime)}</div>
                         </div>
                       </div>
-                    </Link>
+                    </div>
                   ))}
                 </div>
                 <div className="mt-4">

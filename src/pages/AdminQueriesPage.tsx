@@ -22,7 +22,6 @@ export default function AdminQueriesPage() {
 	const [statusFilter, setStatusFilter] = useState("all")
 	const [categoryFilter, setCategoryFilter] = useState("all")
 	const [priorityFilter, setPriorityFilter] = useState("all")
-	const [selectedQueries, setSelectedQueries] = useState<string[]>([])
 	const [isLoading, setIsLoading] = useState(true)
 	const [queryCount, setQueryCount] = useState("05")
 	const [error, setError] = useState<string>("")
@@ -71,18 +70,6 @@ export default function AdminQueriesPage() {
 
   const handleQueryClick = (queryId: string) => {
     navigate(`/admin/queries/${queryId}`)
-  }
-
-  const handleSelectQuery = (queryId: string) => {
-    setSelectedQueries((prev) => (prev.includes(queryId) ? prev.filter((id) => id !== queryId) : [...prev, queryId]))
-  }
-
-  const handleSelectAll = () => {
-    if (selectedQueries.length === filteredQueries.length) {
-      setSelectedQueries([])
-    } else {
-      setSelectedQueries(filteredQueries.map((q) => q.queryId))
-    }
   }
 
   return (

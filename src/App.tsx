@@ -12,7 +12,6 @@ import ProfilePage from "./pages/ProfilePage"
 import AdminQueriesPage from "./pages/AdminQueriesPage"
 import UserManagementPage from "./pages/UserManagementPage"
 import CategoryManagementPage from "./pages/CategoryManagementPage"
-import SettingsPage from "./pages/SettingsPage"
 import HelpPage from "./pages/HelpPage"
 import NotFoundPage from "./pages/NotFoundPage"
 import "./App.css"
@@ -35,7 +34,6 @@ function App() {
           <Route path="/admin/queries/:id" element={<AdminQueryDetailPage />} />
           <Route path="/admin/users" element={<UserManagementPage />} />
           <Route path="/admin/categories" element={<CategoryManagementPage />} />
-          <Route path="/admin/settings" element={<SettingsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/help" element={<HelpPage />} />
           <Route path="*" element={<NotFoundPage />} />

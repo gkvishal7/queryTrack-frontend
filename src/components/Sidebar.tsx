@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { Button } from "./ui/button"
 import { Separator } from "./ui/separator"
-import {Home, FileText, Plus, Users, Settings, HelpCircle,
+import {Home, FileText, Plus, Users, HelpCircle,
   User,
   BarChart3,
   Tag,
@@ -49,7 +49,6 @@ export function Sidebar({ userRole }: SidebarProps) {
     { href: "/admin/queries", label: "All Queries", icon: FileText },
     { href: "/admin/users", label: "User Management", icon: Users },
     { href: "/admin/categories", label: "Categories", icon: Tag },
-    { href: "/admin/settings", label: "Settings", icon: Settings },
     { href: "/profile", label: "Profile", icon: User },
     { href: "/help", label: "Help", icon: HelpCircle },
   ]

@@ -1,7 +1,6 @@
 "use client"
 
 import { Button } from "../components/ui/button"
-import { Card, CardContent } from "../components/ui/card"
 import { Home, ArrowLeft, Search, HelpCircle } from "lucide-react"
 import { Link } from "react-router-dom"
 
@@ -12,7 +11,7 @@ export default function NotFoundPage() {
         {/* 404 Illustration */}
         <div className="mb-8">
           <div className="text-8xl font-bold text-gray-200 dark:text-gray-700 mb-4">404</div>
-          <div className="w-24 h-24 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-24 h-24 bg-gradient-to-r from-green-600 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-6">
             <Search className="w-12 h-12 text-white" />
           </div>
         </div>
@@ -27,7 +26,7 @@ export default function NotFoundPage() {
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
           <Link to="/">
-            <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg px-8 py-3">
+            <Button className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-lg px-8 py-3">
               <Home className="w-5 h-5 mr-2" />
               Go Home
             </Button>
@@ -38,30 +37,7 @@ export default function NotFoundPage() {
           </Button>
         </div>
 
-        {/* Help Links */}
-        <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
-          <p className="text-sm text-gray-500 mb-4">Need help? Try these options:</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/help">
-              <Button variant="ghost" size="sm">
-                <HelpCircle className="w-4 h-4 mr-2" />
-                Help Center
-              </Button>
-            </Link>
-            <Link to="/dashboard">
-              <Button variant="ghost" size="sm">
-                <Home className="w-4 h-4 mr-2" />
-                Dashboard
-              </Button>
-            </Link>
-            <Link to="/queries">
-              <Button variant="ghost" size="sm">
-                <Search className="w-4 h-4 mr-2" />
-                My Queries
-              </Button>
-            </Link>
-          </div>
-        </div>
+
 
         {/* Footer */}
         <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">

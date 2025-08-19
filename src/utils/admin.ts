@@ -35,6 +35,14 @@ export interface Category {
   categoryDescription: string;
 }
 
+export interface CategoryResponse {
+	id: string;
+	categoryName: string;
+	categoryIcon: string;
+	categoryDescription: string;
+	queryCount : number;
+}
+
 export interface CategoryCreateRequest {
   name: string;
   icon: string;
@@ -157,75 +165,75 @@ export const adminQueryService = {
 // Admin user service
 export const adminUserService = {
   // Get all users
-  async getAllUsers(params?: PaginationParams): Promise<ApiResponse<User[]>> {
-    try {
-      const queryParams = new URLSearchParams();
-      if (params) {
-        if (params.page !== undefined) queryParams.append('page', params.page.toString());
-        if (params.size !== undefined) queryParams.append('size', params.size.toString());
-      }
-      const url = `/admin/users${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-      const response = await http.get<ApiResponse<User[]>>(url);
-      return response;
-    } catch (error: any) {
-      if (error.response?.status === 401) {
-        throw new Error('Unauthorized access. Please login again.');
-      }
-      if (error.response?.status >= 500) {
-        throw new Error('Server error. Please try again later.');
-      }
-      if (!error.response) {
-        throw new Error('Network error. Please check your connection.');
-      }
-      throw new Error(error.response?.data?.message || 'Failed to fetch users.');
-    }
-  },
+	async getAllUsers(params?: PaginationParams): Promise<ApiResponse<User[]>> {
+		try {
+			const queryParams = new URLSearchParams();
+			if (params) {
+				if (params.page !== undefined) queryParams.append('page', params.page.toString());
+				if (params.size !== undefined) queryParams.append('size', params.size.toString());
+			}
+			const url = `/admin/users${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+			const response = await http.get<ApiResponse<User[]>>(url);
+			return response;
+		} catch (error: any) {
+			if (error.response?.status === 401) {
+				throw new Error('Unauthorized access. Please login again.');
+			}
+			if (error.response?.status >= 500) {
+				throw new Error('Server error. Please try again later.');
+			}
+			if (!error.response) {
+				throw new Error('Network error. Please check your connection.');
+			}
+			throw new Error(error.response?.data?.message || 'Failed to fetch users.');
+		}	
+  	},
 
   // Delete a user
-  async deleteUser(emailId: string): Promise<ApiResponse<null>> {
-    try {
-      const response = await http.delete<ApiResponse<null>>(`/admin/users/${emailId}`);
-      return response;
-    } catch (error: any) {
-      if (error.response?.status === 404) {
-        throw new Error('User not found');
-      }
-      if (error.response?.status >= 500) {
-        throw new Error('Server error. Please try again later.');
-      }
-      if (!error.response) {
-        throw new Error('Network error. Please check your connection.');
-      }
-      throw new Error(error.response?.data?.message || 'Failed to delete user.');
-    }
-  }
+	async deleteUser(userId: string): Promise<ApiResponse<null>> {
+		try {
+		const response = await http.delete<ApiResponse<null>>(`/admin/users/${userId}`);
+		return response;
+		} catch (error: any) {
+		if (error.response?.status === 404) {
+			throw new Error('User not found');
+		}
+		if (error.response?.status >= 500) {
+			throw new Error('Server error. Please try again later.');
+		}
+		if (!error.response) {
+			throw new Error('Network error. Please check your connection.');
+		}
+		throw new Error(error.response?.data?.message || 'Failed to delete user.');
+		}
+	}
 };
 
 // Admin category service
 export const adminCategoryService = {
   // Get all categories
-  async getAllCategories(): Promise<ApiResponse<Category[]>> {
-    try {
-      const response = await http.get<ApiResponse<Category[]>>('/admin/categories');
-      return response;
-    } catch (error: any) {
-      if (error.response?.status === 401) {
-        throw new Error('Unauthorized access. Please login again.');
-      }
-      if (error.response?.status >= 500) {
-        throw new Error('Server error. Please try again later.');
-      }
-      if (!error.response) {
-        throw new Error('Network error. Please check your connection.');
-      }
-      throw new Error(error.response?.data?.message || 'Failed to fetch categories.');
-    }
-  },
+	async getAllCategories(): Promise<ApiResponse<CategoryResponse[]>> {
+		try {
+			const response = await http.get<ApiResponse<CategoryResponse[]>>('/admin/categories');
+			return response;
+		} catch (error: any) {
+			if (error.response?.status === 401) {
+				throw new Error('Unauthorized access. Please login again.');
+			}
+			if (error.response?.status >= 500) {
+				throw new Error('Server error. Please try again later.');
+			}
+			if (!error.response) {
+				throw new Error('Network error. Please check your connection.');
+			}
+			throw new Error(error.response?.data?.message || 'Failed to fetch categories.');
+		}
+	},
 
   // Get category by ID
-  async getCategoryById(categoryId: string): Promise<ApiResponse<Category>> {
+  async getCategoryById(categoryId: string): Promise<ApiResponse<CategoryResponse>> {
     try {
-      const response = await http.get<ApiResponse<Category>>(`/admin/categories/${categoryId}`);
+      const response = await http.get<ApiResponse<CategoryResponse>>(`/admin/categories/${categoryId}`);
       return response;
     } catch (error: any) {
       if (error.response?.status === 404) {

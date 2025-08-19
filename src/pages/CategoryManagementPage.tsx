@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
@@ -16,171 +14,205 @@ import {
   DialogTrigger,
 } from "../components/ui/dialog"
 import { Sidebar } from "../components/Sidebar"
-import { Plus, Edit, Trash2, FileText, Settings, BarChart3, Tag, User } from "lucide-react"
+import { Plus, Edit, Trash2, FileText, User, AlertCircle } from "lucide-react"
 import FullScreenLoader from "../components/FullScreenLoader"
+import { adminCategoryService, CategoryResponse, CategoryCreateRequest } from "../utils/admin"
 
-// Mock category data
-const mockCategories = [
-  {
-    id: "cat-001",
-    name: "IT Support",
-    description: "Technical issues, software problems, hardware requests, network connectivity",
-    icon: "💻",
-    color: "blue",
-    isActive: true,
-    queriesCount: 45,
-    members: "20",
-    assignedTeam: "IT Team",
-    slaHours: 24,
-    createdAt: "2023-01-15",
-    updatedAt: "2024-01-10",
-  },
-  {
-    id: "cat-002",
-    name: "Human Resources",
-    description: "Policy questions, benefits, workplace issues, employment matters",
-    icon: "👥",
-    color: "green",
-    isActive: true,
-    queriesCount: 32,
-    members: "20",
-    assignedTeam: "HR Team",
-    slaHours: 48,
-    createdAt: "2023-01-15",
-    updatedAt: "2024-01-08",
-  },
-  {
-    id: "cat-003",
-    name: "Facilities",
-    description: "Building maintenance, office supplies, workspace issues, security",
-    icon: "🏢",
-    color: "orange",
-    isActive: true,
-    queriesCount: 28,
-    members: "20",
-    assignedTeam: "Facilities Team",
-    slaHours: 72,
-    createdAt: "2023-01-15",
-    updatedAt: "2024-01-05",
-  },
-  {
-    id: "cat-004",
-    name: "Finance",
-    description: "Expense reports, budget questions, payment issues, accounting",
-    icon: "💰",
-    color: "purple",
-    isActive: true,
-    queriesCount: 26,
-    members: "20",
-    assignedTeam: "Finance Team",
-    slaHours: 48,
-    createdAt: "2023-01-15",
-    updatedAt: "2024-01-12",
-  },
-  {
-    id: "cat-005",
-    name: "General",
-    description: "Other inquiries not covered by specific categories",
-    icon: "📋",
-    color: "gray",
-    isActive: false,
-    queriesCount: 15,
-    members: "20",
-    assignedTeam: "General Support",
-    slaHours: 96,
-    createdAt: "2023-01-15",
-    updatedAt: "2023-12-20",
-  },
-]
-
-const colorOptions = [
-  { value: "blue", label: "Blue", class: "bg-blue-100 text-blue-800" },
-  { value: "green", label: "Green", class: "bg-green-100 text-green-800" },
-  { value: "orange", label: "Orange", class: "bg-orange-100 text-orange-800" },
-  { value: "purple", label: "Purple", class: "bg-purple-100 text-purple-800" },
-  { value: "red", label: "Red", class: "bg-red-100 text-red-800" },
-  { value: "gray", label: "Gray", class: "bg-gray-100 text-gray-800" },
-]
 
 const iconOptions = ["💻", "👥", "🏢", "💰", "📋", "🔧", "📞", "🎯", "📊", "🔒", "🌐", "📝", "⚡", "🎨", "📈"]
 
 export default function CategoryManagementPage() {
-  const [categories, setCategories] = useState(mockCategories)
+  const [categories, setCategories] = useState<CategoryResponse[]>([])
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [editingCategory, setEditingCategory] = useState<any>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null)
+  const [editingCategory, setEditingCategory] = useState<CategoryResponse | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const [newCategory, setNewCategory] = useState({
     name: "",
     description: "",
     icon: "📋",
-    color: "blue",
-    assignedTeam: "",
-    slaHours: 24,
   })
 
-  const filteredCategories = categories.filter((category) => {
-    const matchesSearch =
-      category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      category.description.toLowerCase().includes(searchTerm.toLowerCase())
-   
+	const filteredCategories = categories.filter((category: CategoryResponse) => {
+		const matchesSearch =
+		category.categoryName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+		category.categoryDescription?.toLowerCase().includes(searchTerm.toLowerCase())
 
-    return matchesSearch;
-  })
+		return matchesSearch;
+	})
 
-  const handleCreateCategory = () => {
-    const category = {
-      id: `cat-${Date.now()}`,
-      ...newCategory,
-      isActive: true,
-      queriesCount: 0,
-      members: "20",
-      createdAt: new Date().toISOString().split("T")[0],
-      updatedAt: new Date().toISOString().split("T")[0],
+  // Fetch categories when component mounts
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+        const response = await adminCategoryService.getAllCategories()
+        if (response && response.data) {
+          // Transform API data to include UI-specific fields
+          const transformedCategories = response.data.map((category) => ({
+            ...category,
+            name: category.categoryName,
+            description: category.categoryDescription,
+            icon: category.categoryIcon || "📋",
+          }))
+          setCategories(transformedCategories)
+        } else {
+          setError("No category data received from server")
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to fetch categories")
+      } finally {
+        setIsLoading(false)
+      }
     }
+    
+    fetchCategories()
+  }, [])
 
-    setCategories([...categories, category])
-    setNewCategory({
-      name: "",
-      description: "",
-      icon: "📋",
-      color: "blue",
-      assignedTeam: "",
-      slaHours: 24,
-    })
-    setIsCreateDialogOpen(false)
+  const handleCreateCategory = async () => {
+    try {
+      setIsLoading(true)
+      
+      const categoryData: CategoryCreateRequest = {
+        name: newCategory.name,
+        description: newCategory.description,
+        icon: newCategory.icon,
+      }
+      
+      const response = await adminCategoryService.addCategory(categoryData)
+      
+      if (response && response.data) {
+        // Transform the new category to match our display format
+        const newCategoryData: CategoryResponse = {
+            id: response.data.id,
+            categoryName: response.data.categoryName,
+            categoryDescription: response.data.categoryDescription,
+            categoryIcon: response.data.categoryIcon,
+            queryCount: 0,
+        }
+        
+        setCategories([...categories, newCategoryData])
+        
+        setNewCategory({
+          name: "",
+          description: "",
+          icon: "📋",
+        })
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create category")
+    } finally {
+      setIsLoading(false)
+      setIsCreateDialogOpen(false)
+    }
   }
 
-  const handleEditCategory = (category: any) => {
+  const handleEditCategory = (category: CategoryResponse) => {
     setEditingCategory(category)
     setIsEditDialogOpen(true)
   }
 
-  const handleUpdateCategory = () => {
-    setCategories(
-      categories.map((cat) =>
-        cat.id === editingCategory.id ? { ...editingCategory, updatedAt: new Date().toISOString().split("T")[0] } : cat,
-      ),
-    )
-    setIsEditDialogOpen(false)
-    setEditingCategory(null)
-  }
-
-  const handleDeleteCategory = (categoryId: string) => {
-    if (confirm("Are you sure you want to delete this category? This action cannot be undone.")) {
-      setCategories(categories.filter((cat) => cat.id !== categoryId))
+  const handleUpdateCategory = async () => {
+    if (!editingCategory) return;
+    
+    try {
+      setIsLoading(true)
+      
+      const categoryData: CategoryCreateRequest = {
+        name: editingCategory.categoryName,
+        description: editingCategory.categoryDescription,
+        icon: editingCategory.categoryIcon,
+      }
+      
+      const response = await adminCategoryService.updateCategory(editingCategory.id, categoryData)
+      
+      if (response && response.data) {
+        // Update the category in our local state
+        const updatedCategories = categories.map((cat: CategoryResponse) => 
+          cat.id === editingCategory.id ? {
+            ...cat,
+            categoryName: response.data.categoryName,
+            categoryDescription: response.data.categoryDescription,
+            categoryIcon: response.data.categoryIcon,
+          } : cat
+        )
+        
+        setCategories(updatedCategories)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update category")
+    } finally {
+      setIsLoading(false)
+      setIsEditDialogOpen(false)
+      setEditingCategory(null)
     }
   }
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000)
-    return () => clearTimeout(timer)
-  }, [])
+  // Show delete confirmation dialog
+  const handleOpenDeleteDialog = (categoryId: string) => {
+    setCategoryToDelete(categoryId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  // Handle the actual delete operation after confirmation
+  const handleConfirmDelete = async () => {
+    if (!categoryToDelete) return;
+    
+    try {
+		setIsLoading(true);
+		
+		const responseAfterDeletion  = await adminCategoryService.deleteCategory(categoryToDelete);
+		console.log("Category deleted successfully:", responseAfterDeletion);
+		// Remove the deleted category from our local state
+		setCategories(categories.filter((cat: CategoryResponse) => cat.id !== categoryToDelete));
+		
+		// Close the dialog
+		setIsDeleteDialogOpen(false);
+		setCategoryToDelete(null);
+    } catch (err) {
+		setError(err instanceof Error ? err.message : "Failed to delete category");
+	} finally {
+      	setIsLoading(false);
+    }
+  }
+
+  // Delete function has been replaced with handleOpenDeleteDialog and handleConfirmDelete
 
   if (isLoading) {
-    return <FullScreenLoader />
+    return <FullScreenLoader message="Loading categories..." />
+  }
+  
+  // Error state
+  if (error) {
+    return (
+      <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+        <Sidebar userRole="admin" />
+        <div className="flex-1 overflow-auto p-6">
+          <Card className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
+            <CardContent className="text-center py-12">
+              <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-red-700 dark:text-red-300 mb-2">Error Loading Categories</h3>
+              <p className="text-red-600 dark:text-red-400 mb-4">
+                {error}
+              </p>
+              <Button 
+                onClick={() => window.location.reload()}
+                variant="outline" 
+                className="border-red-200 text-red-700 hover:bg-red-100 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/30"
+              >
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -231,7 +263,6 @@ export default function CategoryManagementPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Icon</Label>
                       <Select
@@ -246,7 +277,6 @@ export default function CategoryManagementPage() {
                             <SelectItem key={icon} value={icon}>
                               <span className="flex items-center">
                                 <span className="mr-2 text-lg">{icon}</span>
-                                {icon}
                               </span>
                             </SelectItem>
                           ))}
@@ -254,49 +284,6 @@ export default function CategoryManagementPage() {
                       </Select>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>Color</Label>
-                      <Select
-                        value={newCategory.color}
-                        onValueChange={(value) => setNewCategory({ ...newCategory, color: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {colorOptions.map((color) => (
-                            <SelectItem key={color.value} value={color.value}>
-                              <div className="flex items-center">
-                                <div className={`w-3 h-3 rounded-full mr-2 ${color.class}`}></div>
-                                {color.label}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="team">Assigned Team</Label>
-                    <Input
-                      id="team"
-                      value={newCategory.assignedTeam}
-                      onChange={(e) => setNewCategory({ ...newCategory, assignedTeam: e.target.value })}
-                      placeholder="e.g., IT Team"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="sla">SLA (Hours)</Label>
-                    <Input
-                      id="sla"
-                      type="number"
-                      value={newCategory.slaHours}
-                      onChange={(e) => setNewCategory({ ...newCategory, slaHours: Number.parseInt(e.target.value) })}
-                      placeholder="24"
-                    />
-                  </div>
 
                   <div className="flex space-x-2 pt-4">
                     <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} className="flex-1">
@@ -311,54 +298,6 @@ export default function CategoryManagementPage() {
             </Dialog>
           </div>
                           
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Categories</CardTitle>
-                <Tag className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{categories.length}</div>
-                <p className="text-xs text-muted-foreground">Available categories</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Categories</CardTitle>
-                <Settings className="h-4 w-4 text-green-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">{categories.filter((c) => c.isActive).length}</div>
-                <p className="text-xs text-muted-foreground">Currently active</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Queries</CardTitle>
-                <FileText className="h-4 w-4 text-blue-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">
-                  {categories.reduce((sum, cat) => sum + cat.queriesCount, 0)}
-                </div>
-                <p className="text-xs text-muted-foreground">Across all categories</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Avg Resolution</CardTitle>
-                <BarChart3 className="h-4 w-4 text-purple-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-purple-600">2.4 days</div>
-                <p className="text-xs text-muted-foreground">Average across categories</p>
-              </CardContent>
-            </Card>
-          </div>
 
           {/* Filters */}
           <Card>
@@ -390,10 +329,10 @@ export default function CategoryManagementPage() {
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <span className="text-2xl">{category.icon}</span>
+                      <span className="text-2xl">{category.categoryIcon}</span>
                       <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-white">{category.name}</h3>
-                        
+                        <h3 className="font-semibold text-gray-900 dark:text-white">{category.categoryName}</h3>
+
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -402,14 +341,14 @@ export default function CategoryManagementPage() {
                     </div>
                   </div>
 
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 hidden sm:block">{category.description}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 hidden sm:block">{category.categoryDescription}</p>
 
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-500">Queries</span>
                       <div className="flex items-center space-x-2">
                         <FileText className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm font-medium">{category.queriesCount}</span>
+                        <span className="text-sm font-medium">{category.queryCount || 0}</span>
                       </div>
                     </div>
 
@@ -417,7 +356,7 @@ export default function CategoryManagementPage() {
                       <span className="text-sm text-gray-500"> Members </span>
                       <div className="flex items-center space-x-2">
                         <User className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm font-medium">{category.members}</span>
+                        {/* <span className="text-sm font-medium">{category.members}</span> */}
                       </div>
                     </div>
                   </div>
@@ -431,7 +370,7 @@ export default function CategoryManagementPage() {
                       variant="outline"
                       size="sm"
                       className="text-red-600 hover:text-red-700"
-                      onClick={() => handleDeleteCategory(category.id)}
+                      onClick={() => handleOpenDeleteDialog(category.id)}
                     >
                       <Trash2 className="w-4 h-4" />
 					  Delete
@@ -455,8 +394,8 @@ export default function CategoryManagementPage() {
                     <Label htmlFor="edit-name">Category Name</Label>
                     <Input
                       id="edit-name"
-                      value={editingCategory.name}
-                      onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
+                      value={editingCategory.categoryName}
+                      onChange={(e) => setEditingCategory({ ...editingCategory, categoryName : e.target.value })}
                     />
                   </div>
 
@@ -464,8 +403,8 @@ export default function CategoryManagementPage() {
                     <Label htmlFor="edit-description">Description</Label>
                     <Textarea
                       id="edit-description"
-                      value={editingCategory.description}
-                      onChange={(e) => setEditingCategory({ ...editingCategory, description: e.target.value })}
+                      value={editingCategory.categoryDescription}
+                      onChange={(e) => setEditingCategory({ ...editingCategory, categoryDescription: e.target.value })}
                       rows={3}
                     />
                   </div>
@@ -474,8 +413,8 @@ export default function CategoryManagementPage() {
                     <div className="space-y-2">
                       <Label>Icon</Label>
                       <Select
-                        value={editingCategory.icon}
-                        onValueChange={(value) => setEditingCategory({ ...editingCategory, icon: value })}
+                        value={editingCategory.categoryIcon}
+                        onValueChange={(value) => setEditingCategory({ ...editingCategory, categoryIcon: value })}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -485,30 +424,7 @@ export default function CategoryManagementPage() {
                             <SelectItem key={icon} value={icon}>
                               <span className="flex items-center">
                                 <span className="mr-2 text-lg">{icon}</span>
-                                {icon}
                               </span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Color</Label>
-                      <Select
-                        value={editingCategory.color}
-                        onValueChange={(value) => setEditingCategory({ ...editingCategory, color: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {colorOptions.map((color) => (
-                            <SelectItem key={color.value} value={color.value}>
-                              <div className="flex items-center">
-                                <div className={`w-3 h-3 rounded-full mr-2 ${color.class}`}></div>
-                                {color.label}
-                              </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -527,6 +443,39 @@ export default function CategoryManagementPage() {
                   </div>
                 </div>
               )}
+            </DialogContent>
+          </Dialog>
+
+          {/* Delete Confirmation Dialog */}
+          <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-red-600 dark:text-red-400">Delete Category</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <p className="text-gray-600 dark:text-gray-400">
+                  Are you sure ? This action cannot be undone. Any queries associated with this category may be affected.
+                </p>
+                
+                <div className="flex space-x-2 pt-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setIsDeleteDialogOpen(false);
+                      setCategoryToDelete(null);
+                    }} 
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleConfirmDelete} 
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    Delete Category
+                  </Button>
+                </div>
+              </div>
             </DialogContent>
           </Dialog>
         </div>
