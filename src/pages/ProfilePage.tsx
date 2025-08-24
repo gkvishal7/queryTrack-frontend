@@ -178,7 +178,7 @@ export default function ProfilePage() {
                 <User className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{user?.queryStats?.openQueriesCount || 0}</div>
+                <div className="text-2xl font-bold">{user?.queryStats?.openQueries || 0}</div>
                 <p className="text-xs text-muted-foreground">Awaiting response</p>
               </CardContent>
             </Card>
@@ -189,7 +189,7 @@ export default function ProfilePage() {
                 <Shield className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{user?.queryStats?.inProgressQueriesCount || 0}</div>
+                <div className="text-2xl font-bold text-blue-600">{user?.queryStats?.inProgressQueries || 0}</div>
                 <p className="text-xs text-muted-foreground">Currently being processed</p>
               </CardContent>
             </Card>
@@ -200,7 +200,7 @@ export default function ProfilePage() {
                 <Shield className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{user?.queryStats?.resolvedQueriesCount || 0}</div>
+                <div className="text-2xl font-bold text-green-600">{user?.queryStats?.resolvedQueries || 0}</div>
                 <p className="text-xs text-muted-foreground">Successfully completed</p>
               </CardContent>
             </Card>

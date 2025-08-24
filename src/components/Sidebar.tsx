@@ -49,7 +49,7 @@ export function Sidebar({ userRole }: SidebarProps) {
     { href: "/admin/queries", label: "All Queries", icon: FileText },
     { href: "/admin/users", label: "User Management", icon: Users },
     { href: "/admin/categories", label: "Categories", icon: Tag },
-    { href: "/profile", label: "Profile", icon: User },
+    { href: "/admin/profile", label: "Profile", icon: User },
     { href: "/help", label: "Help", icon: HelpCircle },
   ]
 

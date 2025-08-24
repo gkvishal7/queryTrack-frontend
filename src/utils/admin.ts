@@ -1,6 +1,6 @@
 
 import { http } from './api';
-import { Query, PaginationParams, ApiResponse } from './query';
+import { Query, PaginationParams, ApiResponse, QueryStats } from './query';
 
 // User interfaces
 
@@ -17,6 +17,11 @@ export interface AdminQuerySummaryResponse  {
   department: string;
 }
 
+export interface AdminQueryListResponse {
+  queries: AdminQuerySummaryResponse[];
+  queryStats: QueryStats;
+}
+
 export interface User {
   id: string;
   username: string;
@@ -27,7 +32,6 @@ export interface User {
   numberOfQueries: number;
 }
 
-// Category interfaces
 export interface Category {
   id: string;
   categoryName: string;
@@ -60,39 +64,10 @@ export interface AdminQueryResponse {
 	username: string;
 }
 
-export interface QueryActivity {
-  id: string;
-  type: string;
-  user: string;
-  timestamp: string;
-  content: string;
-  isInternal: boolean;
-}
-
-export interface QueryReporter {
-  name: string;
-  email: string;
-  department: string;
-}
-
-export interface QueryAssignedTo {
-  name: string;
-  email: string;
-  role: string;
-}
-
-// Extend the existing Query interface for detailed view
-export interface DetailedQuery extends Query {
-  reporter: QueryReporter;
-  assignedTo?: QueryAssignedTo; // Optional, as it might not always be assigned
-  createdAt: string;
-  updatedAt: string;
-}
-
 // Admin query service
 export const adminQueryService = {
   // Get all queries for admin
-  async getAllQueries(params?: PaginationParams): Promise<ApiResponse<AdminQuerySummaryResponse[]>> {
+  async getAllQueries(params?: PaginationParams): Promise<ApiResponse<AdminQueryListResponse>> {
     try {
 		const queryParams = new URLSearchParams();
 		if (params) {
@@ -100,7 +75,7 @@ export const adminQueryService = {
 			if (params.size !== undefined) queryParams.append('size', params.size.toString());
 		}
 		const url = `/admin/queries${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-		const response = await http.get<ApiResponse<AdminQuerySummaryResponse[]>>(url);
+		const response = await http.get<ApiResponse<AdminQueryListResponse>>(url);
 		return response;
 		
     } catch (error: any) {
@@ -143,6 +118,27 @@ export const adminQueryService = {
   async updateQueryStatus(queryId: string, status: string): Promise<ApiResponse<Query>> {
     try {
       const response = await http.patch<ApiResponse<Query>>(`/admin/queries/${queryId}/status`, { status });
+      return response;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        throw new Error('Query not found');
+      }
+      if (error.response?.status === 422) {
+        throw new Error('Invalid status value');
+      }
+      if (error.response?.status >= 500) {
+        throw new Error('Server error. Please try again later.');
+      }
+      if (!error.response) {
+        throw new Error('Network error. Please check your connection.');
+      }
+      throw new Error(error.response?.data?.message || 'Failed to update query status.');
+    }
+  },
+
+  async deleteQuery(queryId: string): Promise<ApiResponse<Query>> {
+    try {
+      const response = await http.delete<ApiResponse<Query>>(`/admin/queries/${queryId}`);
       return response;
     } catch (error: any) {
       if (error.response?.status === 404) {

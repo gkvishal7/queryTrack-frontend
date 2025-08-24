@@ -5,20 +5,11 @@ import { Input } from "../components/ui/input"
 import { Badge } from "../components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import { Sidebar } from "../components/Sidebar"
-import { Search, Filter, Edit, Trash2, UserCheck, AlertCircle } from "lucide-react"
+import { Search, Filter, Trash2, UserCheck, AlertCircle } from "lucide-react"
 import { adminUserService, User } from "../utils/admin"
 import FullScreenLoader from "../components/FullScreenLoader"
+import { getRoleColor } from "../constants/constants"
 
-const getRoleColor = (role: string) => {
-  switch (role) {
-    case "Admin":
-      return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
-    case "User":
-      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-    default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
-  }
-}
 
 // Helper function to format role and department strings from uppercase to proper case
 const formatRoleOrDepartment = (value: string): string => {
@@ -35,14 +26,8 @@ const formatRoleOrDepartment = (value: string): string => {
 		.join(' ');
 }
 
-// Interface for our user display data (combines API data with UI-specific fields)
-interface UserDisplayData extends User {
-  status?: string;
-
-}
-
 export default function UserManagementPage() {
-  const [users, setUsers] = useState<UserDisplayData[]>([])
+  const [users, setUsers] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
@@ -264,10 +249,6 @@ export default function UserManagementPage() {
                         </div>
 
                         <div className="flex space-x-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                          <Button variant="outline" size="sm" className="flex-1">
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit
-                          </Button>
                           <Button 
                             variant="outline" 
                             size="sm" 

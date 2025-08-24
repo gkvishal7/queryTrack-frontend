@@ -4,9 +4,6 @@ import { Button } from "../components/ui/button"
 import { Sidebar } from "../components/Sidebar"
 import {
   FileText,
-  Clock,
-  CheckCircle,
-  AlertTriangle,
   Users,
   TrendingUp,
   Menu,
@@ -17,15 +14,9 @@ import FullScreenLoader from "../components/FullScreenLoader"
 import { getStatusColor, getPriorityColor } from "../constants/constants"
 import {adminQueryService, type AdminQuerySummaryResponse } from "@/utils/admin"
 import { format } from "date-fns"
-// import { QueryStats } from "@/utils/profile"
+import { Progress } from "@/components/ui/progress"
+import QueryStatsComponent from "@/components/QueryStatsComponent"
 
-const categoryStats = [
-  { name: "IT Support", count: 45, percentage: 29, trend: "up" },
-  { name: "HR", count: 32, percentage: 21, trend: "down" },
-  { name: "Facilities", count: 28, percentage: 18, trend: "up" },
-  { name: "General", count: 25, percentage: 16, trend: "up" },
-  { name: "Finance", count: 26, percentage: 16, trend: "down" },
-]
 
 interface QueryStats {
   totalQueries: number;
@@ -54,26 +45,21 @@ export default function AdminDashboard() {
 
 	const fetchQueries = async () => {
 		try {
-		const response = await adminQueryService.getAllQueries()
-		setQueries(response.data)
-		
-		// Calculate stats from queries
-		const totalQueries = response.data.length
-		const newQueries = response.data.filter(q => q.status === "OPEN").length
-		const resolvedQueries = response.data.filter(q => q.status === "RESOLVED").length
-		const inProgressQueries = response.data.filter(q => q.status === "IN_PROGRESS").length
+      const response = await adminQueryService.getAllQueries()
+      setQueries(response.data.queries)
+      
+      const totalQueries = response.data.queryStats.openQueries + response.data.queryStats.inProgressQueries  + response.data.queryStats.resolvedQueries
+      const newQueries = response.data.queryStats.openQueries
+      const resolvedQueries = response.data.queryStats.resolvedQueries
+      const inProgressQueries = response.data.queryStats.inProgressQueries
 
-		setStats({
-		totalQueries,
-		newQueries,
-		resolvedQueries,
-		inProgressQueries
-		})
+      setStats({ totalQueries, newQueries, resolvedQueries, inProgressQueries })
 
-		setIsLoading(false)
+      setIsLoading(false)
+
 		} catch (error: any) {
-		setError(error.message)
-		setIsLoading(false)
+      setError(error.message)
+      setIsLoading(false)
 		}
 	}
 
@@ -88,6 +74,10 @@ export default function AdminDashboard() {
   if (isLoading) {
     return <FullScreenLoader />
   }
+  
+  const resolutionRate = stats.totalQueries > 0 
+  ? Math.round((stats.resolvedQueries / stats.totalQueries) * 100)
+  : 0
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
@@ -137,55 +127,9 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Key Metrics */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6">
-            <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Queries</CardTitle>
-                <FileText className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalQueries}</div>
-                <p className="text-xs text-muted-foreground">
-                  <TrendingUp className="w-3 h-3 inline mr-1" />
-                  +12% from last month
-                </p>
-              </CardContent>
-            </Card>
+          {/* Stats Cards */}
+          <QueryStatsComponent stats={stats} />
 
-            <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
-                <Clock className="h-4 w-4 text-yellow-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-yellow-600">{stats.newQueries}</div>
-                <p className="text-xs text-muted-foreground">Requires immediate attention</p>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">In Progress</CardTitle>
-                <AlertTriangle className="h-4 w-4 text-red-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-red-600">{stats.inProgressQueries}</div>
-                <p className="text-xs text-muted-foreground">Past due date</p>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Resolved Queries</CardTitle>
-                <CheckCircle className="h-4 w-4 text-green-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">{stats.resolvedQueries}%</div>
-                <p className="text-xs text-muted-foreground">Average resolution rate</p>
-              </CardContent>
-            </Card>
-          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 md:gap-6">
             {/* Recent Queries */}
@@ -198,31 +142,45 @@ export default function AdminDashboard() {
                 
               </CardHeader>
               <CardContent>
-                <div className="space-y-2 md:space-y-4">
-                  {queries.map((query) => (
-                    <div key={query.queryId} onClick={() => handleQueryClick(query.queryId)}>
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-2 md:p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer gap-2">
-                        <div className="flex-1">
-                          <div className="flex flex-wrap items-center space-x-2 mb-2">
-                            <Badge className={getStatusColor(query.status.replace("_", " "))}>{query.status.replace("_", " ")}</Badge>
-                            <Badge variant="outline" className={getPriorityColor(query.priority)}>
-                              {query.priority}
-                            </Badge>
-                          </div>
-                          <div className="text-base md:text-lg font-semibold text-gray-900 dark:text-white">{query.title}</div>
-                          <div className="text-xs md:text-sm text-gray-500">{query.categoryName} | {formatDate(query.dateTime)}</div>
-                        </div>
+               
+                  {
+                    queries.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-8 text-center">
+                        <FileText className="w-12 h-12 text-gray-400 mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Queries Yet</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                          No Queries have been raised yet.
+                        </p>
+                        
                       </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4">
-                  <Link to="/admin/queries">
-                    <Button variant="outline" className="w-full">
-                      View All Queries
-                    </Button>
-                  </Link>
-                </div>
+                    ) : (
+					<div className="space-y-2 md:space-y-4">
+						{queries.map((query) => (
+							<div key={query.queryId} onClick={() => handleQueryClick(query.queryId)}>
+							<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-2 md:p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer gap-2">
+								<div className="flex-1">
+								<div className="flex flex-wrap items-center space-x-2 mb-2">
+									<Badge className={getStatusColor(query.status.replace("_", " "))}>{query.status.replace("_", " ")}</Badge>
+									<Badge variant="outline" className={getPriorityColor(query.priority)}>
+									{query.priority}
+									</Badge>
+								</div>
+								<div className="text-base md:text-lg font-semibold text-gray-900 dark:text-white">{query.title}</div>
+								<div className="text-xs md:text-sm text-gray-500">{query.categoryName} | {formatDate(query.dateTime)}</div>
+								</div>
+							</div>
+							</div>
+						))}
+						<div className="mt-4">
+							<Link to="/admin/queries">
+								<Button variant="outline" className="w-full">
+								View All Queries
+								</Button>
+							</Link>
+						</div>
+					</div>)
+                  }
+                
               </CardContent>
             </Card>
 
@@ -232,19 +190,30 @@ export default function AdminDashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <TrendingUp className="w-5 h-5 mr-2" />
-                  Query Categories
+                  Resolution Rate
                 </CardTitle>
-                <CardDescription>Distribution of queries by category</CardDescription>
+                <CardDescription>Percentage of your queries that have been resolved</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-2 md:space-y-4">
-                {categoryStats.map((category) => (
-                  <div key={category.name} className="border border-black dark:border-white p-2 md:p-4 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xs md:text-sm font-medium text-gray-900 dark:text-white">{category.name}</span>
-                      <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">{category.count}</Badge>
-                    </div>
+              <CardContent className="space-y-4">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-green-600">{resolutionRate}%</div>
+                  <p className="text-sm text-gray-500">of queries resolved</p>
+                </div>
+                <Progress value={resolutionRate} className="w-full" />
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Resolved</span>
+                    <span className="font-medium">{stats.resolvedQueries}</span>
                   </div>
-                ))}
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">In Progress</span>
+                    <span className="font-medium">{stats.inProgressQueries}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">New</span>
+                    <span className="font-medium">{stats.newQueries}</span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>

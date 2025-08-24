@@ -34,6 +34,7 @@ function App() {
           <Route path="/admin/queries/:id" element={<AdminQueryDetailPage />} />
           <Route path="/admin/users" element={<UserManagementPage />} />
           <Route path="/admin/categories" element={<CategoryManagementPage />} />
+          <Route path="/admin/profile" element={<ProfilePage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/help" element={<HelpPage />} />
           <Route path="*" element={<NotFoundPage />} />

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
@@ -23,7 +23,8 @@ import {
 } from "lucide-react"
 import { ModularButton } from "@/components/ModularButton"
 import { queryService } from "../utils/query"
-import { categories } from "../constants/constants"
+import { CategoryResponse } from "@/utils/admin"
+import FullScreenLoader from "@/components/FullScreenLoader"
 
 const priorities = [
   {
@@ -60,9 +61,12 @@ const priorities = [
 export default function NewQueryPage() {
   const navigate = useNavigate()
   const [currentStep, setCurrentStep] = useState(1)
+  const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [showSuccess, setShowSuccess] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [categories, setCategories] = useState<CategoryResponse[]>([]) // You can populate this with actual categories from your backend
 
   // Form data
   const [formData, setFormData] = useState({
@@ -129,6 +133,23 @@ export default function NewQueryPage() {
     }
   }
 
+  const fetchCategories = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+        const response = await queryService.getCategories()
+        if (response && response.data) {
+          setCategories(response.data);
+        } else {
+          setError("No Categories data received from server")
+        }
+      }catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to fetch users")
+      }finally {
+        setIsLoading(false)
+      }
+  }
+
   const handleNext = () => {
     if (canProceedToNext() && currentStep < totalSteps) {
       setCurrentStep(currentStep + 1)
@@ -145,13 +166,14 @@ export default function NewQueryPage() {
     setIsSubmitting(true)
 
     try {
-      // Prepare the request body according to QueryCreateRequest interface
       const queryData = {
         title: formData.title,
         description: formData.description,
-        category: formData.category, // Match backend expected format
-        priority: formData.priority  // Match backend expected format
+        category: formData.category,
+        priority: formData.priority
       }
+
+      console.log('Submitting query data:', queryData)
 
       // Make API call
       const response = await queryService.createQuery(queryData)
@@ -171,8 +193,16 @@ export default function NewQueryPage() {
     }
   }
 
-  const selectedCategory = categories.find((cat) => cat.value === formData.category)
+  useEffect(() => {
+    fetchCategories()
+  }, [])
+
+  const selectedCategory = categories.find((cat) => cat.categoryName === formData.category)
   const selectedPriority = priorities.find((pri) => pri.value === formData.priority)
+
+  if (isLoading) {
+    return <FullScreenLoader message="Loading ..." />
+  }
 
   if (showSuccess) {
     return (
@@ -187,12 +217,7 @@ export default function NewQueryPage() {
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Query Submitted Successfully!</h2>
               <p className="text-gray-600 dark:text-gray-400 mb-4">
                 Your query has been submitted and assigned ID{" "}
-                <span className="font-mono font-semibold">
-                  QT-
-                  {Math.floor(Math.random() * 1000)
-                    .toString()
-                    .padStart(3, "0")}
-                </span>
+                
               </p>
               <p className="text-sm text-gray-500">Redirecting to your queries...</p>
             </CardContent>
@@ -376,19 +401,19 @@ export default function NewQueryPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {categories.map((category) => (
                           <div
-                            key={category.value}
+                            key={category.id}
                             className={`p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 hover:border-teal-300 ${
-                              formData.category === category.value
+                              formData.category === category.categoryName
                                 ? "border-teal-500 bg-teal-50 dark:bg-teal-900/20"
                                 : "border-gray-200 dark:border-gray-700"
                             }`}
-                            onClick={() => handleInputChange("category", category.value)}
+                            onClick={() => handleInputChange("category", category.categoryName)}
                           >
                             <div className="flex items-start space-x-3">
-                              <span className="text-2xl">{category.icon}</span>
+                              <span className="text-2xl">{category.categoryIcon}</span>
                               <div>
-                                <h3 className="font-medium text-gray-900 dark:text-white">{category.label}</h3>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{category.description}</p>
+                                <h3 className="font-medium text-gray-900 dark:text-white">{category.categoryName}</h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{category.categoryDescription}</p>
                               </div>
                             </div>
                           </div>
@@ -458,8 +483,8 @@ export default function NewQueryPage() {
                         <div className="flex">
                           <Label className="text-lg font-medium text-gray-500 block text-left">Category : </Label>
                           <div className="flex ml-6 space-x-2">
-                            <span className="text-xl">{selectedCategory?.icon}</span>
-                            <span className="font-medium">{selectedCategory?.label}</span>
+                            <span className="text-xl">{selectedCategory?.categoryIcon}</span>
+                            <span className="font-medium">{selectedCategory?.categoryName}</span>
                           </div>
                         </div>
                       </div>

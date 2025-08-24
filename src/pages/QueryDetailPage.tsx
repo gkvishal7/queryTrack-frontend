@@ -165,7 +165,7 @@ export default function QueryDetailPage() {
 			const response = await queryService.updateQuery(query.queryId, {
 				title: editData.title,
 				description: editData.description,
-				category: editData.categoryName, // note: match the API interface
+				categoryName: editData.categoryName, // note: match the API interface
 				priority: editData.priority
 			})
 

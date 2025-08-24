@@ -3,9 +3,10 @@ import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { Progress } from "../components/ui/progress"
 import { Sidebar } from "../components/Sidebar"
-import { FileText, Clock, CheckCircle, AlertCircle, Plus, TrendingUp, Calendar, User, Menu } from "lucide-react"
+import { FileText, Plus, TrendingUp, Calendar, User, Menu } from "lucide-react"
 import { Link } from "react-router-dom"
 import { ModularButton } from "@/components/ModularButton"
+import QueryStatsComponent  from "@/components/QueryStatsComponent"
 import { useState, useEffect } from "react"
 import FullScreenLoader from "../components/FullScreenLoader"
 import { queryService, type QuerySummaryResponse } from "../utils/query"
@@ -40,13 +41,13 @@ export default function UserDashboard() {
   const fetchQueries = async () => {
     try {
       const response = await queryService.getQueries()
-      setQueries(response.data)
+      setQueries(response.data.queries)
       
       // Calculate stats from queries
-      const totalQueries = response.data.length
-      const newQueries = response.data.filter(q => q.status === "OPEN").length
-      const resolvedQueries = response.data.filter(q => q.status === "RESOLVED").length
-      const inProgressQueries = response.data.filter(q => q.status === "IN_PROGRESS").length
+      const totalQueries = response.data.queryStats.openQueries + response.data.queryStats.inProgressQueries  + response.data.queryStats.resolvedQueries
+      const newQueries = response.data.queryStats.openQueries
+      const resolvedQueries = response.data.queryStats.resolvedQueries
+      const inProgressQueries = response.data.queryStats.inProgressQueries
 
       setStats({
         totalQueries,
@@ -113,53 +114,7 @@ export default function UserDashboard() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Queries</CardTitle>
-                <FileText className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalQueries}</div>
-                <p className="text-xs text-muted-foreground">
-                  Queries
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">New</CardTitle>
-                <Clock className="h-4 w-4 text-yellow-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-yellow-600">{stats.newQueries}</div>
-                <p className="text-xs text-muted-foreground">Awaiting response</p>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">In Progress</CardTitle>
-                <AlertCircle className="h-4 w-4 text-blue-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{stats.inProgressQueries}</div>
-                <p className="text-xs text-muted-foreground">Being worked on</p>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Resolved</CardTitle>
-                <CheckCircle className="h-4 w-4 text-green-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">{stats.resolvedQueries}</div>
-                <p className="text-xs text-muted-foreground">Successfully completed</p>
-              </CardContent>
-            </Card>
-          </div>
+          <QueryStatsComponent stats={stats} />
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Recent Queries */}

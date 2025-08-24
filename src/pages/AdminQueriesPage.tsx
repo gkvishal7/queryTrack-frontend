@@ -37,7 +37,7 @@ export default function AdminQueriesPage() {
 			size: parseInt(queryCount),
 			})
 			console.log("Fetched queries:", response.data)
-			setQueries(response.data)
+			setQueries(response.data.queries)
 
 			
 		} catch (error: any) {

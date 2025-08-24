@@ -26,11 +26,6 @@ export interface RegisterCredentials {
   password: string;
 }
 
-export interface AuthError {
-  message: string;
-  field?: string;
-}
-
 // Authentication service
 export const authService = {
   // Login user
@@ -117,9 +112,9 @@ export const authService = {
         throw new Error('No refresh token found');
       }
 
+      console.log('Logging out with refresh token:', refreshToken);
+
       const logoutResponse = await http.post('/public/logout', { refreshToken });
-      
-      console.log('Logout response:', logoutResponse);
       
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');

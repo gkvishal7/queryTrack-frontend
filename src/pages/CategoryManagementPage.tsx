@@ -14,7 +14,7 @@ import {
   DialogTrigger,
 } from "../components/ui/dialog"
 import { Sidebar } from "../components/Sidebar"
-import { Plus, Edit, Trash2, FileText, User, AlertCircle } from "lucide-react"
+import { Plus, Edit, Trash2, FileText, AlertCircle } from "lucide-react"
 import FullScreenLoader from "../components/FullScreenLoader"
 import { adminCategoryService, CategoryResponse, CategoryCreateRequest } from "../utils/admin"
 
@@ -351,20 +351,12 @@ export default function CategoryManagementPage() {
                         <span className="text-sm font-medium">{category.queryCount || 0}</span>
                       </div>
                     </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-500"> Members </span>
-                      <div className="flex items-center space-x-2">
-                        <User className="w-4 h-4 text-gray-400" />
-                        {/* <span className="text-sm font-medium">{category.members}</span> */}
-                      </div>
-                    </div>
                   </div>
 
                   <div className="flex justify-between space-x-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                       <Button variant="outline" size="sm" onClick={() => handleEditCategory(category)}>
                         <Edit className="w-4 h-4" />
-						Edit
+						              Edit
                       </Button>
                     <Button
                       variant="outline"
@@ -373,7 +365,7 @@ export default function CategoryManagementPage() {
                       onClick={() => handleOpenDeleteDialog(category.id)}
                     >
                       <Trash2 className="w-4 h-4" />
-					  Delete
+					              Delete
                     </Button>
                   </div>
                 </CardContent>

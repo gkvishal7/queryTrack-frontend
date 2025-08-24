@@ -1,11 +1,5 @@
 import { http } from './api';
-
-
-export interface QueryStats {
-    openQueriesCount: number;
-    inProgressQueriesCount: number;
-    resolvedQueriesCount: number;
-}
+import { QueryStats } from './query';
 
 export interface Profile {
     emailId: string;

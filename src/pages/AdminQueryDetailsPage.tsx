@@ -83,6 +83,16 @@ export default function AdminQueryDetailPage() {
 		}
 	}
 
+  const handleDelete = async (queryId: string) => {
+    if (window.confirm("Are you sure you want to delete this query?")){
+      const response = await queryService.deleteQuery(queryId)
+      console.log("Query deleted:", response);
+      navigate("/admin/queries")
+    }else{
+      return;
+    }
+  }
+
 	const handleStatusChange = (newStatus: string) => {
 		if (!query || !id) return;
 
@@ -125,7 +135,7 @@ export default function AdminQueryDetailPage() {
             </div>
 
             <div className="flex space-x-2">
-				<Button variant="outline" size="lg" className="text-red-600 hover:text-red-700">
+				<Button onClick={() => handleDelete(query.queryId)} variant="outline" size="lg" className="text-red-600 hover:text-red-700">
 					<Trash2 className="w-4 h-4 mr-2" />
 					Delete
 				</Button>
