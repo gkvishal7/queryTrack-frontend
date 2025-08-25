@@ -16,6 +16,14 @@ import { getStatusColor, getPriorityColor } from "@/constants/constants"
 import { AdminQuerySummaryResponse, adminQueryService } from "@/utils/admin"
 
 
+const priorities = [
+  { value: "LOW", label: "Low" },
+  { value: "MEDIUM", label: "Medium" },
+  { value: "HIGH", label: "High" }, 
+  { value: "CRITICAL", label: "Critical" }
+]
+
+
 export default function AdminQueriesPage() {
 	const navigate = useNavigate()
 	const [searchTerm, setSearchTerm] = useState("")
@@ -141,36 +149,18 @@ export default function AdminQueriesPage() {
                     <SelectValue placeholder="All Priorities" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Priorities</SelectItem>
-                    <SelectItem value="Low">Low</SelectItem>
-                    <SelectItem value="Medium">Medium</SelectItem>
-                    <SelectItem value="High">High</SelectItem>
-                    <SelectItem value="Critical">Critical</SelectItem>
+					<SelectItem value="all">All Priorities</SelectItem>
+					{
+						priorities.map((prio) => (
+							<SelectItem key={prio.value} value={prio.value}>{prio.label}</SelectItem>
+						))
+					}
                   </SelectContent>
                 </Select>
 
                 
               </div>
 
-              {/* View Mode Toggle */}
-              <div className="flex items-center justify-between">
-                
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Sort by:</span>
-                  <Select defaultValue="newest">
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="newest">Newest</SelectItem>
-                      <SelectItem value="oldest">Oldest</SelectItem>
-                      <SelectItem value="priority">Priority</SelectItem>
-                      <SelectItem value="status">Status</SelectItem>
-                      <SelectItem value="sla">SLA</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
             </CardContent>
           </Card>
 

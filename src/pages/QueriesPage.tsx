@@ -11,19 +11,11 @@ import { ModularButton } from "@/components/ModularButton"
 import FullScreenLoader from "../components/FullScreenLoader"
 import { queryService, type QuerySummaryResponse } from "../utils/query"
 import { format } from "date-fns"
+import { categories, getPriorityColor } from "@/constants/constants"
+import NoQueriesCard from "@/components/NoQueriesCard"
 
-// Available categories and priorities for filtering
-const categories = [
-//   { value: "all", label: "All Categories" },
-  { value: "IT Support", label: "IT Support" },
-  { value: "HR", label: "HR" },
-  { value: "Facilities", label: "Facilities" },
-  { value: "Finance", label: "Finance" },
-  { value: "General", label: "General" }
-]
 
 const statuses = [
-//   { value: "all", label: "All Statuses" },
   { value: "OPEN", label: "Open" },
   { value: "IN_PROGRESS", label: "In Progress" },
   { value: "RESOLVED", label: "Resolved" },
@@ -34,7 +26,8 @@ const priorities = [
 //   { value: "all", label: "All Priorities" },
   { value: "LOW", label: "Low" },
   { value: "MEDIUM", label: "Medium" },
-  { value: "HIGH", label: "High" }
+  { value: "HIGH", label: "High" }, 
+  { value: "CRITICAL", label: "Critical" }
 ]
 
 const getStatusColor = (status: string) => {
@@ -45,21 +38,6 @@ const getStatusColor = (status: string) => {
       return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
     case "IN PROGRESS":
       return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-    default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
-  }
-}
-
-const getPriorityColor = (priority: string) => {
-  switch (priority) {
-    case "HIGH":
-      return "bg-orange-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-    case "MEDIUM":
-      return "bg-yellow-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
-    case "LOW":
-      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-	case "CRITICAL":
-	return "bg-red-100 text-green-800 dark:bg-green-900 dark:text-green-200"
     default:
       return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
   }
@@ -305,25 +283,8 @@ export default function QueriesPage() {
 
           {/* Queries List */}
           <div className="space-y-4">
-            {queries.length === 0 ? (
-              <Card>
-                <CardContent className="text-center py-12">
-                  <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg text-start font-medium text-gray-900 dark:text-white mb-2">No queries found</h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    {searchTerm || statusFilter !== "all" || categoryFilter !== "all" || priorityFilter !== "all"
-                      ? "Try adjusting your filters or search terms."
-                      : "You haven't submitted any queries yet."}
-                  </p>
-                  <Button
-                    onClick={() => navigate("/queries/new")}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Submit Your First Query
-                  </Button>
-                </CardContent>
-              </Card>
+            {filteredQueries.length === 0 ? (
+              <NoQueriesCard  />
             ) : (
               filteredQueries.map((query) => (
                 <Card

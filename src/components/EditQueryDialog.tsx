@@ -14,64 +14,34 @@ import {
   AlertTriangle,
   Clock,
 } from "lucide-react"
+import { Query } from "@/utils/query"
+import { categories } from "@/constants/constants"
 
-const categories = [
-  {
-    value: "IT Support",
-    label: "IT Support",
-    description: "Technical issues, software problems, hardware requests, network connectivity",
-    icon: "💻",
-  },
-  {
-    value: "Human Resources",
-    label: "Human Resources",
-    description: "Policy questions, benefits, workplace issues, employment matters",
-    icon: "👥",
-  },
-  {
-    value: "Facilities",
-    label: "Facilities",
-    description: "Building maintenance, office supplies, workspace issues, security",
-    icon: "🏢",
-  },
-  {
-    value: "Finance",
-    label: "Finance",
-    description: "Expense reports, budget questions, payment issues, accounting",
-    icon: "💰",
-  },
-  {
-    value: "General",
-    label: "General",
-    description: "Other inquiries not covered by specific categories",
-    icon: "📋",
-  },
-]
 
 const priorities = [
   {
-    value: "Low",
+    value: "LOW",
     label: "Low",
     description: "Non-urgent, can wait several days",
     color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
     icon: <Clock className="w-4 h-4" />,
   },
   {
-    value: "Medium",
+    value: "MEDIUM",
     label: "Medium",
     description: "Important but not urgent, within 2-3 days",
     color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
     icon: <AlertCircle className="w-4 h-4" />,
   },
   {
-    value: "High",
+    value: "HIGH",
     label: "High",
     description: "Urgent, needs attention within 24 hours",
     color: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
     icon: <AlertTriangle className="w-4 h-4" />,
   },
   {
-    value: "Critical",
+    value: "CRITICAL",
     label: "Critical",
     description: "Emergency, immediate attention required",
     color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
@@ -86,19 +56,12 @@ interface AttachedFile {
   type: string
 }
 
-interface QueryData {
-  title: string
-  description: string
-  categoryName: string
-  priority: string
-  // attachments: AttachedFile[]
-}
 
 interface EditQueryDialogProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (data: QueryData) => void
-  initialData: QueryData
+  onSave: (data: Query) => void
+  initialData: Query
   isSaving?: boolean
 }
 
@@ -109,7 +72,7 @@ export default function EditQueryDialog({
   initialData,
   isSaving = false,
 }: EditQueryDialogProps) {
-  const [formData, setFormData] = useState<QueryData>(initialData)
+  const [formData, setFormData] = useState<Query>(initialData)
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))

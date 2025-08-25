@@ -50,7 +50,7 @@ export function Sidebar({ userRole }: SidebarProps) {
     { href: "/admin/users", label: "User Management", icon: Users },
     { href: "/admin/categories", label: "Categories", icon: Tag },
     { href: "/admin/profile", label: "Profile", icon: User },
-    { href: "/help", label: "Help", icon: HelpCircle },
+    // { href: "/help", label: "Help", icon: HelpCircle },
   ]
 
   const navItems = userRole === "admin" ? adminNavItems : userNavItems

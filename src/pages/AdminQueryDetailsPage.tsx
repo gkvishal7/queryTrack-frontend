@@ -101,7 +101,7 @@ export default function AdminQueryDetailPage() {
 
 		// Send latest status directly
 		updateStatus(newStatus);
-  	}
+  }
 
   	if (isLoading || isSaving) {
 		return <FullScreenLoader message={isSaving ? "Saving..." : undefined} />

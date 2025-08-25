@@ -1,22 +1,15 @@
 import { useState, useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams } from "react-router-dom"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import { Separator } from "../components/ui/separator"
 import { Sidebar } from "../components/Sidebar"
 import EditQueryDialog from "../components/EditQueryDialog"
 import {
   Edit,
-  Paperclip,
   Calendar,
-  Clock,
-  FileText,
-  Download,
   RotateCcw,
-  Trash2,
-  Save,
 } from "lucide-react"
 import FullScreenLoader from "../components/FullScreenLoader"
 
@@ -50,7 +43,6 @@ const priorities = [
 
 export default function QueryDetailPage() {
   const { id } = useParams()
-  const navigate = useNavigate()
   const [query, setQuery] = useState<Query | null>(null);
   const [hasChanges, setHasChanges] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -80,17 +72,6 @@ export default function QueryDetailPage() {
     fetchQueryDetails()
   }, [id])
 
-    const handleQueryChange = (key: keyof Query, value: string) => {
-        setQuery((prev: Query | null) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            [key]: value,
-          };
-        });
-        setHasChanges(true);
-    };
-
   const handleSave = async () => {
     if (!query || !id) return
 
@@ -109,9 +90,43 @@ export default function QueryDetailPage() {
     }
   }
 
-  // Mock user role - in real app this would come from auth context
-  const [userRole] = useState<"user" | "admin">("user") // Change to 'user' to see user view
-  const [currentUser] = useState("Sarah Johnson") // Mock current user
+    const updateStatus = async(newStatus : string) => {
+      if (!query || !id) return
+  
+      try {
+        setIsSaving(true)
+        setError("")
+        
+        const response = await queryService.updateQuery(id, {...query, status: newStatus })
+        console.log(response);
+  
+        setQuery((prev: Query | null) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            title: response.data.title,
+            description: response.data.description,
+            categoryName: response.data.categoryName,
+            priority: response.data.priority,
+            status: response.data.status,
+          };
+        })
+  
+        console.log("Query updated successfully:", query);
+      
+      } catch (error: any) {
+        setError(error.message || "Failed to save changes")
+        console.error("Error saving query:", error)
+        } finally {
+        setIsSaving(false)
+      }
+    }
+
+    const handleStatusChange = (newStatus: string) => {
+		if (!query || !id) return;
+		setQuery({ ...query, status: newStatus });
+		updateStatus(newStatus);
+    }
 
   const formatDate = (dateString: string | null) => {
 	if(!dateString) return "N/A"
@@ -137,17 +152,6 @@ export default function QueryDetailPage() {
     return priorityObj?.color || "bg-gray-100 text-gray-800"
   }
 
-  const handleStatusChange = (newStatus: string) => {
-    // In real app, this would make an API call
-    // setQuery((prev) => ({ ...prev, status: newStatus }))
-    handleQueryChange("status", newStatus)
-  }
-
-  const handlepriorityChange = (newPriority: string) => {
-    // In real app, this would make an API call
-    // setQuery((prev) => ({ ...prev, priority: newPriority }))
-    handleQueryChange("priority", newPriority)
-  }
 
   const handleEditQuery = () => {
     setIsEditDialogOpen(true)
@@ -191,13 +195,6 @@ export default function QueryDetailPage() {
 		}
 	}
 
-  const getEditDialogData = () => ({
-    title: query?.title ?? "",
-    description: query?.description ?? "",
-    categoryName: query?.categoryName ? query.categoryName.toLowerCase().replace(" ", "_") : "",
-    priority: query?.priority ? query.priority.toLowerCase() : ""
-  })
-
 	if (isLoading || isSaving) {
 		return <FullScreenLoader message={isSaving ? "Saving..." : undefined} />
 	}
@@ -208,7 +205,7 @@ export default function QueryDetailPage() {
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar userRole={userRole} />
+      <Sidebar userRole={"user"} />
 
       <div className="flex-1 overflow-auto">
         <div className="p-6 max-w-6xl mx-auto space-y-6">
@@ -229,56 +226,17 @@ export default function QueryDetailPage() {
 
             {/* Action Buttons */}
             <div className="flex space-x-2">
-              {userRole === "user" && (
-                <>
                   <Button variant="outline" size="sm" onClick={handleEditQuery}>
                     <Edit className="w-4 h-4 mr-2" />
                     <span className="hidden sm:block">Edit Query</span>
                   </Button>
                   
-                  {query?.status === "Resolved" && (
-                    <Button variant="outline" size="sm">
+                  {query?.status === "RESOLVED" && (
+                    <Button onClick={() => handleStatusChange("OPEN")} variant="outline" size="sm">
                       <RotateCcw className="w-4 h-4 mr-2" />
                       Reopen
                     </Button>
                   )}
-                </>
-              )}
-
-              {userRole === "admin" && (
-                <>
-                  {hasChanges ? (
-                    <Button 
-                      onClick={handleSave}
-                      disabled={isSaving}
-                      variant="outline" 
-                      size="sm"
-                      className="bg-gradient-to-r from-teal-600 to-green-600 hover:from-green-700 hover:to-teal-700"
-                    >
-                      {isSaving ? (
-                        <div className="flex items-center">
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                          Saving...
-                        </div>
-                      ) : (
-                        <>
-                          <Save className="w-4 h-4 mr-2" />
-                          Save Changes
-                        </>
-                      )}
-                    </Button>
-                  ) : (
-                    <Button variant="outline" size="sm" onClick={handleEditQuery}>
-                      <Edit className="w-4 h-4 mr-2" />
-                      Edit Details
-                    </Button>
-                  )}
-                  <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete
-                  </Button>
-                </>
-              )}
             </div>
           </div>
 
@@ -352,51 +310,18 @@ export default function QueryDetailPage() {
                 <CardContent className="space-y-4 text-left">
                   <div>
                     <label className="text-sm font-semibold text-gray-300">Status</label>
-                    {userRole === "admin" ? (
-                      <Select value={query?.status.toLowerCase().replace(" ", "_")} onValueChange={(value) => handleQueryChange("status",value)}>
-                        <SelectTrigger className="mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {statuses.map((status) => (
-                            <SelectItem key={status.value} value={status.value}>
-                              {status.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
                       <div className="mt-1">
-                        <Badge className={getStatusColor(query?.status)}>{query?.status}</Badge>
+                        <Badge className={getStatusColor(query?.status)}>{query?.status.replace("_", " ")}</Badge>
                       </div>
-                    )}
+
                   </div>
 
                   <div>
                     <label className="text-sm font-semibold text-gray-300">Priority</label>
                     <div className="mt-1">
-						{userRole === "admin" ? 
-							(
-								<Select value={query?.priority.toLowerCase().replace(" ", "_")} onValueChange={(value) => handleQueryChange("priority", value)}>
-								<SelectTrigger className="mt-1">
-								<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-								{priorities.map((priority) => (
-									<SelectItem key={priority.value} value={priority.value}>
-									{priority.label}
-									</SelectItem>
-								))}
-								</SelectContent>
-							</Select>
-							) : 
-							(
-								<div className="mt-1">
-									<Badge className={getPriorityColor(query?.priority)}>{query?.priority}</Badge>
-								</div>
-							)
-						}
-                    
+                          <div className="mt-1">
+                            <Badge className={getPriorityColor(query?.priority)}>{query?.priority}</Badge>
+                          </div>
                     </div>
                   </div>
 
@@ -441,18 +366,16 @@ export default function QueryDetailPage() {
         )}
 
         {/* Edit Query Dialog */}
-        {
-			userRole === "user" ? 
-			(
+        
+			
 				<EditQueryDialog
 					isOpen={isEditDialogOpen}
 					onClose={() => setIsEditDialogOpen(false)}
 					onSave={handleSaveEdit}
-					initialData={getEditDialogData()}
+					initialData={query}
 					isSaving={isSavingEdit}
         		/>
-			) : (<></>)
-		}
+		
       </div>
     </div>
   )

@@ -8,7 +8,7 @@ import { Sidebar } from "../components/Sidebar"
 import { Search, Filter, Trash2, UserCheck, AlertCircle } from "lucide-react"
 import { adminUserService, User } from "../utils/admin"
 import FullScreenLoader from "../components/FullScreenLoader"
-import { getRoleColor } from "../constants/constants"
+import { departments, getRoleColor } from "../constants/constants"
 
 
 // Helper function to format role and department strings from uppercase to proper case
@@ -155,12 +155,11 @@ export default function UserManagementPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Departments</SelectItem>
-                    <SelectItem value="Marketing">Marketing</SelectItem>
-                    <SelectItem value="IT Support">IT Support</SelectItem>
-                    <SelectItem value="HR">HR</SelectItem>
-                    <SelectItem value="Sales">Sales</SelectItem>
-                    <SelectItem value="Facilities">Facilities</SelectItem>
-                    <SelectItem value="Finance">Finance</SelectItem>
+                    {
+                      departments.map((dept) => (
+                        <SelectItem key={dept.value} value={dept.label}>{dept.label}</SelectItem>
+                      ))
+                    }
                   </SelectContent>
                 </Select>
               </div>

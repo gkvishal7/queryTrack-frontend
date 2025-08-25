@@ -12,6 +12,7 @@ import { Eye, EyeOff, Zap } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { authService, type RegisterCredentials } from "../utils/auth"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { departments } from "@/constants/constants"
 
 export default function RegisterPage() {
   const navigate = useNavigate()
@@ -270,13 +271,11 @@ export default function RegisterPage() {
                      <SelectValue placeholder="Select your department" />
                    </SelectTrigger>
                    <SelectContent>
-                     <SelectItem value="ENGINEERING">Engineering</SelectItem>
-                     <SelectItem value="SALES">Sales</SelectItem>
-                     <SelectItem value="MARKETING">Marketing</SelectItem>
-                     <SelectItem value="HR">Human Resources</SelectItem>
-                     <SelectItem value="IT">IT Support</SelectItem>
-                     <SelectItem value="FINANCE">Finance</SelectItem>
-                     <SelectItem value="OPERATIONS">Operations</SelectItem>
+                      {
+                        departments.map((dept) => (
+                          <SelectItem key={dept.value} value={dept.value}>{dept.label}</SelectItem>
+                        ))
+                      }
                    </SelectContent>
                  </Select>
                </div>
