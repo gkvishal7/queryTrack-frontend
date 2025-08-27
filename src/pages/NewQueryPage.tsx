@@ -11,11 +11,7 @@ import { Sidebar } from "../components/Sidebar"
 import {
   ArrowLeft,
   Send,
-  Paperclip,
   AlertCircle,
-  X,
-  FileText,
-  ImageIcon,
   CheckCircle,
   Clock,
   AlertTriangle,

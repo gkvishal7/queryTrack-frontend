@@ -1,23 +1,9 @@
-"use client"
-
 import { useState } from "react"
-import { Button } from "../components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
-import { Input } from "../components/ui/input"
-import { Badge } from "../components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Sidebar } from "../components/Sidebar"
 import {
-  Search,
-  ChevronDown,
-  ChevronRight,
   HelpCircle,
   Book,
-  MessageSquare,
-  Mail,
-  Phone,
-  ExternalLink,
-  FileText,
-  Video,
   Users,
   Menu,
 } from "lucide-react"
@@ -102,71 +88,9 @@ const faqCategories = [
   },
 ]
 
-const resources = [
-  {
-    title: "User Guide",
-    description: "Comprehensive guide covering all features and functionality",
-    icon: Book,
-    type: "PDF",
-    url: "#",
-  },
-  {
-    title: "Video Tutorials",
-    description: "Step-by-step video tutorials for common tasks",
-    icon: Video,
-    type: "Video",
-    url: "#",
-  },
-  {
-    title: "API Documentation",
-    description: "Technical documentation for developers and integrations",
-    icon: FileText,
-    type: "Web",
-    url: "#",
-  },
-  {
-    title: "Best Practices Guide",
-    description: "Tips and best practices for effective query management",
-    icon: HelpCircle,
-    type: "PDF",
-    url: "#",
-  },
-]
-
-const contactOptions = [
-  {
-    title: "Email Support",
-    description: "Get help via email - we typically respond within 24 hours",
-    icon: Mail,
-    contact: "support@querytrack.com",
-    availability: "24/7",
-  },
-  {
-    title: "Phone Support",
-    description: "Speak directly with our support team",
-    icon: Phone,
-    contact: "+1 (555) 123-HELP",
-    availability: "Mon-Fri, 9 AM - 6 PM EST",
-  },
-  {
-    title: "Live Chat",
-    description: "Chat with our support team in real-time",
-    icon: MessageSquare,
-    contact: "Available in app",
-    availability: "Mon-Fri, 9 AM - 6 PM EST",
-  },
-]
-
 export default function HelpPage() {
   const [searchTerm, setSearchTerm] = useState("")
-  const [openCategories, setOpenCategories] = useState<string[]>(["getting-started"])
   const [sidebarOpen, setSidebarOpen] = useState(false)
-
-  const toggleCategory = (categoryId: string) => {
-    setOpenCategories((prev) =>
-      prev.includes(categoryId) ? prev.filter((id) => id !== categoryId) : [...prev, categoryId],
-    )
-  }
 
   const filteredFAQs = faqCategories
     .map((category) => ({

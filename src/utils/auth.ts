@@ -114,7 +114,7 @@ export const authService = {
 
       console.log('Logging out with refresh token:', refreshToken);
 
-      const logoutResponse = await http.post('/public/logout', { refreshToken });
+      await http.post('/public/logout', { refreshToken });
       
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');

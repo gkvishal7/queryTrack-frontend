@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "../components/ui/button"
-import { Home, ArrowLeft, Search, HelpCircle } from "lucide-react"
+import { Home, ArrowLeft, Search } from "lucide-react"
 import { Link } from "react-router-dom"
 
 export default function NotFoundPage() {

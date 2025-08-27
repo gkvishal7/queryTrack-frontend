@@ -6,9 +6,6 @@ import { Textarea } from "./ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import {
   X,
-  Paperclip,
-  FileText,
-  ImageIcon,
   Save,
   AlertCircle,
   AlertTriangle,
@@ -49,14 +46,6 @@ const priorities = [
   },
 ]
 
-interface AttachedFile {
-  id: string
-  name: string
-  size: number
-  type: string
-}
-
-
 interface EditQueryDialogProps {
   isOpen: boolean
   onClose: () => void
@@ -77,42 +66,6 @@ export default function EditQueryDialog({
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
-
-  // const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   const files = event.target.files
-  //   if (files) {
-  //     const newFiles: AttachedFile[] = Array.from(files).map((file) => ({
-  //       id: Math.random().toString(36).substr(2, 9),
-  //       name: file.name,
-  //       size: file.size,
-  //       type: file.type,
-  //     }))
-  //     setFormData((prev) => ({
-  //       ...prev,
-  //       attachments: [...prev.attachments, ...newFiles],
-  //     }))
-  //   }
-  // }
-
-  // const removeFile = (fileId: string) => {
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     attachments: prev.attachments.filter((file) => file.id !== fileId),
-  //   }))
-  // }
-
-  // const formatFileSize = (bytes: number) => {
-  //   if (bytes === 0) return "0 Bytes"
-  //   const k = 1024
-  //   const sizes = ["Bytes", "KB", "MB", "GB"]
-  //   const i = Math.floor(Math.log(bytes) / Math.log(k))
-  //   return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
-  // }
-
-  // const getFileIcon = (type: string) => {
-  //   if (type.startsWith("image/")) return <ImageIcon className="w-4 h-4" />
-  //   return <FileText className="w-4 h-4" />
-  // }
 
   const handleSave = () => {
     onSave(formData)
@@ -207,56 +160,6 @@ export default function EditQueryDialog({
               </Select>
             </div>
           </div>
-
-          {/* Attachments */}
-          {/* <div className="space-y-4">
-            <Label className="text-left block">Attachments</Label>
-            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center hover:border-teal-400 transition-colors">
-              <Paperclip className="w-6 h-6 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                Drag and drop files here, or click to browse
-              </p>
-              <input
-                type="file"
-                multiple
-                onChange={handleFileUpload}
-                className="hidden"
-                id="file-upload"
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.txt,.log"
-              />
-              <Label htmlFor="file-upload">
-                <Button type="button" variant="outline" size="sm" asChild>
-                  <span>Choose Files</span>
-                </Button>
-              </Label>
-            </div> */}
-
-            {/* Attached Files */}
-            {/* {formData.attachments.length > 0 && (
-              <div className="space-y-2">
-                <Label>Attached Files ({formData.attachments.length})</Label>
-                <div className="space-y-2">
-                  {formData.attachments.map((file) => (
-                    <div
-                      key={file.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
-                    >
-                      <div className="flex items-center space-x-3">
-                        {getFileIcon(file.type)}
-                        <div>
-                          <p className="text-sm font-medium">{file.name}</p>
-                          <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
-                        </div>
-                      </div>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => removeFile(file.id)}>
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )} */}
-          {/* </div> */}
         </div>
 
         {/* Footer */}
