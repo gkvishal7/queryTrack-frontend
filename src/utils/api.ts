@@ -10,7 +10,7 @@ interface ApiConfig {
 
 // Default API configuration
 const defaultConfig: ApiConfig = {
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL:  import.meta.env.VITE_BACKEND_SERVER_URL || '/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
