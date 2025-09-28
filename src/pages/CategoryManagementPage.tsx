@@ -192,7 +192,7 @@ export default function CategoryManagementPage() {
   if (error) {
     return (
       <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-        <Sidebar userRole="admin" />
+        <Sidebar  />
         <div className="flex-1 overflow-auto p-6">
           <Card className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
             <CardContent className="text-center py-12">
@@ -217,7 +217,7 @@ export default function CategoryManagementPage() {
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar userRole="admin" />
+      <Sidebar  />
 
       <div className="flex-1 overflow-auto">
         <div className="p-6 space-y-6">

@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom"
 import { ThemeProvider } from "./components/theme-provider"
+import AuthGuard from "./components/AuthGuard"
 import LandingPage from "./pages/LandingPage"
 import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
@@ -25,17 +26,66 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/dashboard" element={<UserDashboard />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/queries" element={<QueriesPage />} />
-          <Route path="/queries/new" element={<NewQueryPage />} />
-          <Route path="/queries/:id" element={<QueryDetailPage />} />
-          <Route path="/admin/queries" element={<AdminQueriesPage />} />
-          <Route path="/admin/queries/:id" element={<AdminQueryDetailPage />} />
-          <Route path="/admin/users" element={<UserManagementPage />} />
-          <Route path="/admin/categories" element={<CategoryManagementPage />} />
-          <Route path="/admin/profile" element={<ProfilePage userRole="admin" />} />
-          <Route path="/profile" element={<ProfilePage userRole="user" />} />
+          
+
+          <Route path="/dashboard" element={
+            <AuthGuard>
+              <UserDashboard />
+            </AuthGuard>
+          } />
+          <Route path="/queries" element={
+            <AuthGuard>
+              <QueriesPage />
+            </AuthGuard>
+          } />
+          <Route path="/queries/new" element={
+            <AuthGuard>
+              <NewQueryPage />
+            </AuthGuard>
+          } />
+          <Route path="/queries/:id" element={
+            <AuthGuard>
+              <QueryDetailPage />
+            </AuthGuard>
+          } />
+          <Route path="/profile" element={
+            <AuthGuard>
+              <ProfilePage userRole="user" />
+            </AuthGuard>
+          } />
+          
+          {/* Protected admin routes */}
+          <Route path="/admin/dashboard" element={
+            <AuthGuard adminOnly>
+              <AdminDashboard />
+            </AuthGuard>
+          } />
+          <Route path="/admin/queries" element={
+            <AuthGuard adminOnly>
+              <AdminQueriesPage />
+            </AuthGuard>
+          } />
+          <Route path="/admin/queries/:id" element={
+            <AuthGuard adminOnly>
+              <AdminQueryDetailPage />
+            </AuthGuard>
+          } />
+          <Route path="/admin/users" element={
+            <AuthGuard adminOnly>
+              <UserManagementPage />
+            </AuthGuard>
+          } />
+          <Route path="/admin/categories" element={
+            <AuthGuard adminOnly>
+              <CategoryManagementPage />
+            </AuthGuard>
+          } />
+          <Route path="/admin/profile" element={
+            <AuthGuard adminOnly>
+              <ProfilePage userRole="admin" />
+            </AuthGuard>
+          } />
+          
           <Route path="/help" element={<HelpPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

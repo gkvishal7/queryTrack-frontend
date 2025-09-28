@@ -10,13 +10,13 @@ import { Label } from "../components/ui/label"
 import { Checkbox } from "../components/ui/checkbox"
 import { Eye, EyeOff, Zap } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
-import { authService, type LoginCredentials } from "../utils/auth"
+import { useAuthStore } from "../stores/authStore"
+import { LoginCredentials } from "@/utils/auth"
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const { login, isLoading, error, clearError } = useAuthStore()
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string>("")
   const [formData, setFormData] = useState<LoginCredentials>({
     emailId: "",
     password: ""
@@ -36,24 +36,19 @@ export default function LoginPage() {
     
     console.log("Form submitted, preventing default...");
   
-    if (error) setError("");
-    if (!isLoading) setIsLoading(true);
+    if (error) clearError();
   
     try {
       console.log("Attempting login with:", formData);
-      const response = await authService.login(formData);
+      await login(formData.emailId, formData.password);
   
-      console.log("Login successful:", response.data.emailId, response.data.username);
-      if(response.data.role === "ADMIN") {
-        navigate("/admin/dashboard");
-      } else {
-        navigate("/dashboard");
-      }
+      console.log("Login successful, navigating...");
+      // Navigation will be handled by the AuthGuard component
+      // We can navigate to a default route and let AuthGuard handle the redirect
+      navigate("/dashboard");
     } catch (error: any) {
       console.error("Login error:", error);
-      setError(error.message || "Login failed. Please try again.");
-    } finally {
-      setIsLoading(false);
+      // Error is already handled by the auth store
     }
   };
 

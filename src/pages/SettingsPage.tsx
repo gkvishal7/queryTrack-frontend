@@ -106,7 +106,7 @@ export default function SettingsPage() {
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar userRole="admin" />
+      <Sidebar />
 
       <div className="flex-1 overflow-auto">
         <div className="p-6 max-w-6xl mx-auto space-y-6">
