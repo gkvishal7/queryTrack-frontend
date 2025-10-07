@@ -8,16 +8,17 @@ import { Label } from "../components/ui/label"
 import { Checkbox } from "../components/ui/checkbox"
 import { Eye, EyeOff, Zap } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
-import { authService, type RegisterCredentials } from "../utils/auth"
+import { useAuthStore } from "../stores/authStore"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { departments } from "@/constants/constants"
+import { RegisterCredentials } from "@/utils/auth"
 
 export default function RegisterPage() {
   const navigate = useNavigate()
+  const { register, isLoading, error, setError, clearError } = useAuthStore()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string>("")
+
   const [passwordError, setPasswordError] = useState<string>("")
   const [phoneError, setPhoneError] = useState<string>("")
   const [passwordStrength, setPasswordStrength] = useState(0)
@@ -43,7 +44,7 @@ export default function RegisterPage() {
     }
     
     // Clear errors when user starts typing
-    if (error) setError("")
+    if (error) clearError()
     if (passwordError) setPasswordError("")
     if (phoneError) setPhoneError("")
   }
@@ -128,7 +129,7 @@ export default function RegisterPage() {
       console.log("Form submitted, preventing default...");
     
       // Clear previous errors
-      if (error) setError("");
+      if (error) clearError();
       if (passwordError) setPasswordError("");
       if (phoneError) setPhoneError("");
     
@@ -168,21 +169,17 @@ export default function RegisterPage() {
         return;
       }
     
-      if (!isLoading) setIsLoading(true);
-    
       try {
         console.log("Attempting registration with:", formData);
-        const response = await authService.register(formData);
+        await register(formData);
     
-        console.log("Registration successful:", response.data.emailId, response.data.username);
-    
-        // Navigate to dashboard after successful registration
+        console.log("Registration successful, navigating...");
+        // Navigation will be handled by the AuthGuard component
         navigate("/dashboard");
       } catch (error: any) {
-        console.error("Registration error: ehy", error);
+        console.error("Registration error:", error);
         setError(error.message || "Registration failed. Please try again.");
-      } finally {
-        setIsLoading(false);
+        // Error is already handled by the auth store
       }
   };
 

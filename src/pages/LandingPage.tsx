@@ -20,10 +20,10 @@ export default function LandingPage() {
 			</Link>
 			<div className="flex items-center space-x-4">
 				<Link to="/login">
-				<Button className="font-geist bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700">Login</Button>
+				<Button size="lg" className="bg-gradient-to-r from-green-600 to-ptealurple-600 hover:from-green-700 hover:to-teal-700 text-lg px48 py-6">Login</Button>
 				</Link>
 				<Link to="/register">
-				<Button className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700">
+				<Button className="bg-gradient-to-r from-green-600 to-ptealurple-600 hover:from-green-700 hover:to-teal-700 text-lg px48 py-6">
 					Get Started
 				</Button>
 				</Link>
@@ -62,7 +62,7 @@ export default function LandingPage() {
           <div className="relative max-w-4xl mx-auto">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 rounded-2xl blur-3xl opacity-20"></div>
             <img
-              src="/placeholder.svg?height=600&width=800"
+              src="/QueryTrack.png"
               alt="Query Track Dashboard Preview"
               className="relative rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full"
             />

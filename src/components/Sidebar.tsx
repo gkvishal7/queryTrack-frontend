@@ -15,17 +15,16 @@ import {Home, FileText, Plus, Users, HelpCircle,
   Zap,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { authService } from "@/utils/auth"
+import { useAuthStore } from "@/stores/authStore"
 
-interface SidebarProps {
-  userRole: "user" | "admin"
-}
-
-export function Sidebar({ userRole }: SidebarProps) {
+export function Sidebar() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { user, logout, getUserRole } = useAuthStore()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
+
+  const userRole = getUserRole()
 
   // Prevent expanding on mobile
   const handleCollapseToggle = () => {
@@ -51,7 +50,7 @@ export function Sidebar({ userRole }: SidebarProps) {
     // { href: "/help", label: "Help", icon: HelpCircle },
   ]
 
-  const navItems = userRole === "admin" ? adminNavItems : userNavItems
+  const navItems = userRole === "ADMIN" ? adminNavItems : userNavItems
 
   const isActive = (href: string) => {
     if (href === "/dashboard" || href === "/admin/dashboard") {
@@ -117,10 +116,14 @@ export function Sidebar({ userRole }: SidebarProps) {
               className="w-10 h-10 rounded-full object-cover mx-4"
             />
             <div className="min-w-0 text-left">
-              <div className="text-sm font-medium text-gray-900 dark:text-white truncate ">John Smith</div>
+              <div className="text-sm font-medium text-gray-900 dark:text-white truncate ">
+                {user?.username || 'User'}
+              </div>
               <div className="items-center">
-                <div className="text-xs inline text-gray-500 dark:text-gray-400">Marketing</div>
-                {userRole === "admin" && (
+                <div className="text-xs inline text-gray-500 dark:text-gray-400">
+                  {user?.department || 'Department Not Found'}
+                </div>
+                {user?.role === "ADMIN" && (
                   <div className="flex items-center space-x-1 px-2 py-0.5 bg-teal-100 dark:bg-teal-900/30 rounded-full">
                     <Shield className="w-3 h-3 text-teal-600 dark:text-teal-400" />
                     <span className="text-xs font-medium text-teal-700 dark:text-teal-300">Admin</span>
@@ -182,7 +185,7 @@ export function Sidebar({ userRole }: SidebarProps) {
           variant="ghost"
           onClick={async () => {
             try {
-              await authService.logout();
+              await logout();
               navigate('/'); // Redirect to home page after successful logout
             } catch (error) {
               console.error('Logout failed:', error);

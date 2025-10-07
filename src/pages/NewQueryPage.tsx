@@ -203,7 +203,7 @@ export default function NewQueryPage() {
   if (showSuccess) {
     return (
       <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-        <Sidebar userRole="user" />
+        <Sidebar />
         <div className="flex-1 flex items-center justify-center">
           <Card className="w-full max-w-md text-center">
             <CardContent className="pt-6">
@@ -227,14 +227,14 @@ export default function NewQueryPage() {
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       {/* Sidebar for desktop, overlay for mobile */}
       <div className="hidden md:block">
-        <Sidebar userRole="user" />
+        <Sidebar />
       </div>
       <div className={`fixed inset-0 z-40 md:hidden transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
         style={{ background: sidebarOpen ? 'rgba(0,0,0,0.3)' : 'transparent' }}
         onClick={() => setSidebarOpen(false)}
       >
         <div className="w-64 h-full bg-white dark:bg-gray-900 shadow-lg" onClick={e => e.stopPropagation()}>
-          <Sidebar userRole="user" />
+          <Sidebar />
         </div>
       </div>
       <div className="flex-1 overflow-auto">
