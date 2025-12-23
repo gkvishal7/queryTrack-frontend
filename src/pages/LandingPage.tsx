@@ -51,7 +51,7 @@ export default function LandingPage() {
                 size="lg"
                 className="bg-gradient-to-r from-green-600 to-ptealurple-600 hover:from-green-700 hover:to-teal-700 text-lg px-8 py-3"
               >
-                Start Free Trial
+                Get Started
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
